@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        is-multidex="true"
+        jar="D:\Poly Stuff (Hardrive)\YEAR 2\S2\Mobile\MGP_Lab02_153492Y\app\build\intermediates\incremental-classes\debug\instant-run-bootstrap.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="25.0.0"
+        sha1="d451a6dd1cbdf0425f9d5d59eac9056908f5eaee">
+        <dex dex="D:\Poly Stuff (Hardrive)\YEAR 2\S2\Mobile\MGP_Lab02_153492Y\app\build\intermediates\transforms\dex\debug\folders\1000\10\instant-run-bootstrap_dd4bc0f376617afd7e33089b3889cff958081a23\classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="D:\Poly Stuff (Hardrive)\YEAR 2\S2\Mobile\MGP_Lab02_153492Y\app\build\intermediates\incremental-runtime-classes\debug\instant-run.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="25.0.0"
+        sha1="4f4cc0e412dd7555a94d55450a0bd775e1d7825b">
+        <dex dex="D:\Poly Stuff (Hardrive)\YEAR 2\S2\Mobile\MGP_Lab02_153492Y\app\build\intermediates\transforms\dex\debug\folders\1000\10\instant-run_21914d6fa7b0a4663dc1c089161c4d11688d09b1\classes.dex" />
+    </item>
+
+</items>
