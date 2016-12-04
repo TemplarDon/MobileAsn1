@@ -9,7 +9,9 @@ import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.Button;
 
+import java.util.LinkedList;
 import java.util.Random;
 
 /**
@@ -19,7 +21,6 @@ import java.util.Random;
 public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
 
     // Implement this interface to receive information about changes to the surface.
-
     private GameThread myThread = null; // Thread to control the rendering
 
     // 1a) Variables used for background rendering
@@ -46,7 +47,13 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     long dt;
 
     // Variable for Game State check
-    private short GameState;
+    private GAME_STATES GameState;
+    private enum GAME_STATES
+    {
+        START_UP,
+        INGAME,
+        PAUSED,
+    }
 
     // Init SpriteAnimation
     private SpriteAnimation anim_coin;
@@ -56,6 +63,25 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
     // Action bools
     protected boolean b_moveShip = false;
+
+    // Buttons
+    private Button btn_slide;
+    private Bitmap btn_slide_tex;
+    Vector3 btn_slide_pos;
+
+    private Button btn_pause;
+    private Bitmap btn_pause_tex;
+    Vector3 btn_pause_pos;
+
+    private Button btn_start;
+    private Bitmap btn_start_tex;
+    Vector3 btn_start_pos;
+
+    // Timer
+    float f_timer;
+
+    // GameObject List
+    LinkedList<GameObject> m_GoList = new LinkedList<GameObject>();
 
     //constructor for this GamePanelSurfaceView class
     public GamePanelSurfaceView(Context context) {
@@ -91,6 +117,22 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
         // Make the GamePanel focusable so it can handle events
         setFocusable(true);
+
+        // Load Button Images
+        btn_slide_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.button), ScreenWidth / 8, ScreenHeight / 8, true);
+        btn_slide_pos = new Vector3(0, 1250, 0);
+
+        btn_pause_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.button), ScreenWidth / 8, ScreenHeight / 8, true);
+        btn_pause_pos = new Vector3(2250, 0, 0);
+
+        btn_start_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.button), ScreenWidth / 4, ScreenHeight / 4, true);
+        btn_start_pos = new Vector3(1100, 600, 0);
+
+        // Timer
+        f_timer = 0.f;
+
+        // GameState
+        GameState = GAME_STATES.START_UP;
     }
 
     //must implement inherited abstract methods
@@ -124,25 +166,61 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
     }
 
-    public void RenderGameplay(Canvas canvas) {
-        // 2) Re-draw 2nd image after the 1st image ends
+    public void RenderStartUp(Canvas canvas) {
+
         if (canvas == null) {
             return;
         }
 
-        canvas.drawBitmap(ScaledBackground, bgX, bgY, null); // 1st BG
-        canvas.drawBitmap(ScaledBackground, bgX + ScreenWidth, bgY, null); // 2nd Image, bgY + ScreenHeight for vertical
+        RenderBackground(canvas);
+        RenderPlayer(canvas);
 
-        // 4d) Draw the spaceships
-        canvas.drawBitmap(shipArr[shipArrIdx], mX, mY, null); // location of the ship, based on touch
+        //RenderTextOnScreen(canvas, Integer.toString(3 - (int)f_timer), 1100, 600, 500);
 
-        // Bonus) To print FPS on the screen
+        RenderButton(canvas, btn_start_tex, btn_start_pos);
+
+        // Debug State
+        RenderTextOnScreen(canvas, "START-UP", 130, 75, 50);
+    }
+
+    public void RenderGameplay(Canvas canvas) {
+
+        if (canvas == null) {
+            return;
+        }
+
+        RenderBackground(canvas);
+        RenderPlayer(canvas);
+
+        // Print FPS
         RenderTextOnScreen(canvas, "FPS: " + FPS, 130, 75, 50);
 
         // Draw SpriteAnim
         anim_coin.draw(canvas);
         anim_coin.setX(coinX);
         anim_coin.setY(coinY);
+
+        RenderButton(canvas, btn_slide_tex, btn_slide_pos);
+        RenderButton(canvas, btn_pause_tex, btn_pause_pos);
+
+        // Debug State
+        RenderTextOnScreen(canvas, "IN-GAME", 130, 75, 50);
+    }
+
+    private void RenderBackground(Canvas canvas)
+    {
+        canvas.drawBitmap(ScaledBackground, bgX, bgY, null); // 1st BG
+        canvas.drawBitmap(ScaledBackground, bgX + ScreenWidth, bgY, null); // 2nd Image, bgY + ScreenHeight for vertical
+    }
+
+    private void RenderButton(Canvas canvas, Bitmap btnToRender, Vector3 pos)
+    {
+        canvas.drawBitmap(btnToRender, pos.x, pos.y, null);
+    }
+
+    private void RenderPlayer(Canvas canvas)
+    {
+        canvas.drawBitmap(shipArr[shipArrIdx], mX, mY, null); // location of the ship, based on touch
     }
 
 
@@ -151,7 +229,19 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         FPS = fps;
 
         switch (GameState) {
-            case 0: {
+            case START_UP: {
+
+                // Update ship.
+                shipArrIdx++;
+                shipArrIdx %= 4;
+
+                // Make SpriteAnim
+                anim_coin.update(System.currentTimeMillis());
+                break;
+            }
+
+
+            case INGAME: {
                 // 3) Update the background to allow panning effect
                 bgX -= 250 * dt;
 
@@ -166,15 +256,20 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                 // Make SpriteAnim
                 anim_coin.update(System.currentTimeMillis());
+                break;
             }
-            break;
+
         }
     }
 
     // Rendering is done on Canvas
     public void doDraw(Canvas canvas) {
         switch (GameState) {
-            case 0:
+            case START_UP:
+                RenderStartUp(canvas);
+                break;
+
+            case INGAME:
                 RenderGameplay(canvas);
                 break;
         }
@@ -216,14 +311,25 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         switch(action) {
 
             case MotionEvent.ACTION_DOWN:
-                // To check finger touch x,y within image, i.e holding down on the image
-                if (CheckCollision(
-                        mX, mY, shipArr[shipArrIdx].getWidth() / 2, shipArr[shipArrIdx].getHeight() / 2,
-                        m_touchX, m_touchY, 0, 0))
-                    b_moveShip = true;
-                else
-                    b_moveShip = false;
 
+                // Check if button pressed
+                if (GameState == GAME_STATES.START_UP) {
+                    if (CheckCollision(
+                            (int) btn_start_pos.x, (int) btn_start_pos.y, btn_start_tex.getWidth(), btn_start_tex.getHeight(),
+                            m_touchX, m_touchY, 0, 0)) {
+                        GameState = GAME_STATES.INGAME;
+                    }
+                }
+                else
+                {
+                    // To check finger touch x,y within image, i.e holding down on the image
+                    if (CheckCollision(
+                            mX, mY, shipArr[shipArrIdx].getWidth(), shipArr[shipArrIdx].getHeight(),
+                            m_touchX, m_touchY, 0, 0))
+                        b_moveShip = true;
+                    else
+                        b_moveShip = false;
+                }
 
                 break;
 
@@ -236,8 +342,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                     // Check Collision with coin
                     if (CheckCollision(
-                            mX, mY, shipArr[shipArrIdx].getWidth() / 2, shipArr[shipArrIdx].getHeight() / 2,
-                            coinX, coinY, anim_coin.getSpriteWidth() / 2, anim_coin.getSpriteHeight() / 2))
+                            mX, mY, shipArr[shipArrIdx].getWidth(), shipArr[shipArrIdx].getHeight(),
+                            coinX, coinY, anim_coin.getSpriteWidth(), anim_coin.getSpriteHeight()))
                     {
                         Random randomNum = new Random();
                         coinX = randomNum.nextInt(ScreenWidth);
@@ -253,6 +359,50 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
     // Collision Check // To be completed
     public boolean CheckCollision(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2) {
+
+        Vector3 box1_TopLeft = new Vector3(x1, y1, 0);
+        Vector3 box1_TopRight = new Vector3(x1 + w1, y1, 0);
+        Vector3 box1_BtmLeft = new Vector3(x1, y1 + h1, 0);
+        Vector3 box1_BtmRight = new Vector3(x1 + w1, y1 + h1, 0);
+
+        Vector3 box2_TopLeft = new Vector3(x2, y2, 0);
+        Vector3 box2_TopRight = new Vector3(x2 + w2, y2, 0);
+        Vector3 box2_BtmLeft = new Vector3(x2, y2 + h2, 0);
+        Vector3 box2_BtmRight = new Vector3(x2 + w2, y2 + h2, 0);
+
+        // Note: For y-axis downwards is positive
+        // Note: Origin in top-left croner of screen
+
+        // Check if box2 collides with box1
+        // TopLeft
+        if (box2_TopLeft.x >= box1_TopLeft.x && box2_TopLeft.x <= box1_TopRight.x)
+        {
+            if (box2_TopLeft.y >= box1_TopLeft.y && box2_TopLeft.y <= box1_BtmLeft.y)
+                return true;
+        }
+
+        // TopRight
+        if (box2_TopRight.x >= box1_TopLeft.x && box2_TopRight.x <= box1_TopRight.x)
+        {
+            if (box2_TopRight.y >= box1_TopLeft.y && box2_TopRight.y <= box1_BtmLeft.y)
+                return true;
+        }
+
+        // BtmLeft
+        if (box2_BtmLeft.x >= box1_TopLeft.x && box2_BtmLeft.x <= box1_TopRight.x)
+        {
+            if (box2_BtmLeft.y >= box1_TopLeft.y && box2_BtmLeft.y <= box1_BtmLeft.y)
+                return true;
+        }
+
+        // BtmRight
+        if (box2_BtmRight.x >= box1_TopLeft.x && box2_BtmRight.x <= box1_TopRight.x)
+        {
+            if (box2_BtmRight.y >= box1_TopLeft.y && box2_BtmRight.y <= box1_BtmLeft.y)
+                return true;
+        }
+
+        /*
         if (x2 >= x1 && x2 <= x1 + w1) { // Start to detect collision of the top left corner
             if (y2 >= y1 && y2 <= y1 + h1) // Comparing yellow box to blue box
                 return true;
@@ -261,7 +411,37 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
             if (y2 >= y1 && y2 <= y1 + h1)
                 return true;
         }
+        */
         return false;
     }
+
+    public GameObject CreateGameObject(Vector3 pos, Bitmap texture)
+    {
+        GameObject test = new GameObject();
+
+        test.active = true;
+        test.pos = pos;
+        test.texture = texture;
+
+        m_GoList.push(test);
+
+        return test;
+    }
+
+    public GameObject CreateGameObject(Vector3 pos, Bitmap texture, Boolean active)
+    {
+        GameObject test = new GameObject();
+
+        test.active = active;
+        test.pos = pos;
+        test.texture = texture;
+
+        m_GoList.push(test);
+
+        return test;
+
+    }
+
 }
+
 
