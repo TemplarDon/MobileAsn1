@@ -83,6 +83,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     // GameObject List
     LinkedList<GameObject> m_GoList = new LinkedList<GameObject>();
 
+    // Player
+    GameObject m_Player;
+
     //constructor for this GamePanelSurfaceView class
     public GamePanelSurfaceView(Context context) {
 
@@ -133,6 +136,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
         // GameState
         GameState = GAME_STATES.START_UP;
+
+        // GameObjects
+        m_Player = CreateGameObject(new Vector3(0, 700, 0), shipArr[0], true);
     }
 
     //must implement inherited abstract methods
@@ -220,9 +226,30 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
     private void RenderPlayer(Canvas canvas)
     {
-        canvas.drawBitmap(shipArr[shipArrIdx], mX, mY, null); // location of the ship, based on touch
+        canvas.drawBitmap(m_Player.texture, m_Player.pos.x, m_Player.pos.y, null); // location of the ship, based on touch
     }
 
+    private void RenderGameObjects(Canvas canvas)
+    {
+        for (GameObject i : m_GoList)
+        {
+            if (!i.active)
+                continue;
+
+            if (i.IsBitmap)
+            {
+                // Is just single texture
+                canvas.drawBitmap(i.texture, i.pos.x, i.pos.y, null);
+            }
+            else
+            {
+                // Is SpriteAnimation
+                i.spriteAnimation.draw(canvas);
+                i.spriteAnimation.setX((int)i.pos.x);
+                i.spriteAnimation.setY((int)i.pos.y);
+            }
+        }
+    }
 
     //Update method to update the game play
     public void update(float dt, float fps) {
@@ -312,6 +339,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
             case MotionEvent.ACTION_DOWN:
 
+                // To check finger touch x,y within image, i.e holding down on the image
                 // Check if button pressed
                 if (GameState == GAME_STATES.START_UP) {
                     if (CheckCollision(
@@ -322,9 +350,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                 }
                 else
                 {
-                    // To check finger touch x,y within image, i.e holding down on the image
                     if (CheckCollision(
-                            mX, mY, shipArr[shipArrIdx].getWidth(), shipArr[shipArrIdx].getHeight(),
+                            (int)m_Player.pos.x, (int)m_Player.pos.y, (int)m_Player.GetScale().x, (int)m_Player.GetScale().y,
                             m_touchX, m_touchY, 0, 0))
                         b_moveShip = true;
                     else
@@ -337,12 +364,12 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                 if (b_moveShip == true)
                 {
-                    mX = (short) (m_touchX - shipArr[shipArrIdx].getWidth() / 2);
-                    mY = (short) (m_touchY - shipArr[shipArrIdx].getHeight() / 2);
+                    m_Player.pos.x = (short) (m_touchX - shipArr[shipArrIdx].getWidth() / 2);
+                    m_Player.pos.y = (short) (m_touchY - shipArr[shipArrIdx].getHeight() / 2);
 
                     // Check Collision with coin
                     if (CheckCollision(
-                            mX, mY, shipArr[shipArrIdx].getWidth(), shipArr[shipArrIdx].getHeight(),
+                            (int)m_Player.pos.x, (int)m_Player.pos.y, (int)m_Player.GetScale().x, (int)m_Player.GetScale().y,
                             coinX, coinY, anim_coin.getSpriteWidth(), anim_coin.getSpriteHeight()))
                     {
                         Random randomNum = new Random();
@@ -357,7 +384,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         return true;
     }
 
-    // Collision Check // To be completed
+    // Collision Check
     public boolean CheckCollision(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2) {
 
         Vector3 box1_TopLeft = new Vector3(x1, y1, 0);
@@ -401,32 +428,66 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
             if (box2_BtmRight.y >= box1_TopLeft.y && box2_BtmRight.y <= box1_BtmLeft.y)
                 return true;
         }
-
-        /*
-        if (x2 >= x1 && x2 <= x1 + w1) { // Start to detect collision of the top left corner
-            if (y2 >= y1 && y2 <= y1 + h1) // Comparing yellow box to blue box
-                return true;
-        }
-        if (x2 + w2 >= x1 && x2 + w2 <= x1 + w1) { // Top right corner
-            if (y2 >= y1 && y2 <= y1 + h1)
-                return true;
-        }
-        */
         return false;
     }
 
-    public GameObject CreateGameObject(Vector3 pos, Bitmap texture)
-    {
-        GameObject test = new GameObject();
+    // Collision Check w/ GameObjects
+    public boolean CheckCollision(GameObject go1, GameObject go2) {
 
-        test.active = true;
-        test.pos = pos;
-        test.texture = texture;
+        int h1 = (int)(go1.GetScale().y);
+        int w1 = (int)(go1.GetScale().x);
+        int x1 = (int)(go1.pos.x - w1 / 2);
+        int y1 = (int)(go1.pos.y - h1 / 2);
 
-        m_GoList.push(test);
+        int h2 = (int)(go2.GetScale().y);
+        int w2 = (int)(go2.GetScale().x);
+        int x2 = (int)(go2.pos.x - w2 / 2);
+        int y2 = (int)(go2.pos.y - h2 / 2);
 
-        return test;
+        Vector3 box1_TopLeft = new Vector3(x1, y1, 0);
+        Vector3 box1_TopRight = new Vector3(x1 + w1, y1, 0);
+        Vector3 box1_BtmLeft = new Vector3(x1, y1 + h1, 0);
+        Vector3 box1_BtmRight = new Vector3(x1 + w1, y1 + h1, 0);
+
+        Vector3 box2_TopLeft = new Vector3(x2, y2, 0);
+        Vector3 box2_TopRight = new Vector3(x2 + w2, y2, 0);
+        Vector3 box2_BtmLeft = new Vector3(x2, y2 + h2, 0);
+        Vector3 box2_BtmRight = new Vector3(x2 + w2, y2 + h2, 0);
+
+        // Note: For y-axis downwards is positive
+        // Note: Origin in top-left croner of screen
+
+        // Check if box2 collides with box1
+        // TopLeft
+        if (box2_TopLeft.x >= box1_TopLeft.x && box2_TopLeft.x <= box1_TopRight.x)
+        {
+            if (box2_TopLeft.y >= box1_TopLeft.y && box2_TopLeft.y <= box1_BtmLeft.y)
+                return true;
+        }
+
+        // TopRight
+        if (box2_TopRight.x >= box1_TopLeft.x && box2_TopRight.x <= box1_TopRight.x)
+        {
+            if (box2_TopRight.y >= box1_TopLeft.y && box2_TopRight.y <= box1_BtmLeft.y)
+                return true;
+        }
+
+        // BtmLeft
+        if (box2_BtmLeft.x >= box1_TopLeft.x && box2_BtmLeft.x <= box1_TopRight.x)
+        {
+            if (box2_BtmLeft.y >= box1_TopLeft.y && box2_BtmLeft.y <= box1_BtmLeft.y)
+                return true;
+        }
+
+        // BtmRight
+        if (box2_BtmRight.x >= box1_TopLeft.x && box2_BtmRight.x <= box1_TopRight.x)
+        {
+            if (box2_BtmRight.y >= box1_TopLeft.y && box2_BtmRight.y <= box1_BtmLeft.y)
+                return true;
+        }
+        return false;
     }
+
 
     public GameObject CreateGameObject(Vector3 pos, Bitmap texture, Boolean active)
     {
@@ -435,11 +496,29 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         test.active = active;
         test.pos = pos;
         test.texture = texture;
+        test.spriteAnimation = null;
+
+        test.IsBitmap = true;
 
         m_GoList.push(test);
 
         return test;
+    }
 
+    public GameObject CreateGameObject(Vector3 pos, SpriteAnimation spriteAnimation, Boolean active)
+    {
+        GameObject test = new GameObject();
+
+        test.active = active;
+        test.pos = pos;
+        test.spriteAnimation = spriteAnimation;
+        test.texture = null;
+
+        test.IsBitmap = false;
+
+        m_GoList.push(test);
+
+        return test;
     }
 
 }

@@ -13,6 +13,26 @@ public class GameObject {
     }
 
     public Vector3 pos;
-    public Bitmap texture;
     public Boolean active;
+
+    // Object either has sprite animation or normal texture
+    public Bitmap texture;
+    public SpriteAnimation spriteAnimation;
+    public Boolean IsBitmap;
+
+    public Vector3 GetScale()
+    {
+        Vector3 returnVec;
+
+        if(IsBitmap)
+        {
+            returnVec = new Vector3(texture.getWidth(), texture.getHeight(), 0);
+        }
+        else
+        {
+            returnVec = new Vector3(spriteAnimation.getSpriteWidth(), spriteAnimation.getSpriteHeight(), 0);
+        }
+
+        return returnVec;
+    }
 }
