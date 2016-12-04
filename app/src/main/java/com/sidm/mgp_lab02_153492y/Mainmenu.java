@@ -12,8 +12,10 @@ import android.widget.Button;
 public class Mainmenu extends Activity implements OnClickListener {
 
     private Button btn_start;
+    private Button btn_highScore;
     private Button btn_option;
     private Button btn_help;
+    private Button btn_quit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,11 +28,15 @@ public class Mainmenu extends Activity implements OnClickListener {
         btn_start = (Button)findViewById(R.id.btn_start);
         btn_start.setOnClickListener(this);
 
+        btn_highScore = (Button)findViewById(R.id.btn_highScore);
+        btn_highScore.setOnClickListener(this);
+
         btn_option = (Button)findViewById(R.id.btn_option);
         btn_option.setOnClickListener(this);
 
         btn_help = (Button)findViewById(R.id.btn_help);
         btn_help.setOnClickListener(this);
+
     }
 
     @Override
@@ -42,13 +48,17 @@ public class Mainmenu extends Activity implements OnClickListener {
         {
             intent.setClass(this, Gamepage.class);
         }
+        else if(v == btn_highScore)
+        {
+            intent.setClass(this, HighScore.class);
+        }
         else if (v == btn_option)
         {
             intent.setClass(this, GameOption.class);
         }
         else if (v == btn_help)
         {
-            //intent.setClass(this, Helppage.class);
+            intent.setClass(this, HelpPage.class);
         }
 
         // Start activity based on intent
