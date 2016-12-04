@@ -44,7 +44,7 @@ public class Mainmenu extends Activity implements OnClickListener {
         }
         else if (v == btn_option)
         {
-            
+            intent.setClass(this, GameOption.class);
         }
         else if (v == btn_help)
         {
