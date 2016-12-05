@@ -18,6 +18,8 @@ import java.nio.charset.MalformedInputException;
 public class GameOption extends Activity implements OnClickListener {
 
     private Button btn_back;
+    private Button btn_on;
+    private Button btn_off;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +31,10 @@ public class GameOption extends Activity implements OnClickListener {
 
         btn_back = (Button)findViewById(R.id.btn_back);
         btn_back.setOnClickListener(this);
+
+        btn_on = (Button)findViewById(R.id.btn_on);
+        btn_on.setOnClickListener(this);
+
     }
 
     @Override
@@ -37,6 +43,12 @@ public class GameOption extends Activity implements OnClickListener {
 
         if (v == btn_back) {
             intent.setClass(this, Mainmenu.class);
+        }
+        else if( v == btn_on){
+
+        }
+        else if(v == btn_on){
+
         }
 
         // Start activity based on intent

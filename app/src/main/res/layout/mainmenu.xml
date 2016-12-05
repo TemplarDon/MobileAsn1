@@ -13,12 +13,13 @@
 
     <TextView
         android:layout_height="wrap_content"
-        android:text="Rooftop Runners"
+        android:background="@drawable/title"
+        android:typeface = "monospace"
         android:textSize="50dp"
         android:textColor="#bdfcf2"
         android:id="@+id/textView"
         android:layout_width="wrap_content"
-        android:layout_marginBottom="25dp"
+        android:layout_marginBottom="18dp"
         android:layout_above="@+id/btn_start"
         android:layout_centerHorizontal="true" />
 
@@ -73,8 +74,7 @@
         android:id="@+id/btn_quit"
         android:layout_width="150dp"
         android:layout_height="50dp"
-        android:background="@drawable/button"
-        android:text="Quit"
+        android:background="@drawable/quit_button"
         android:textSize="18dp"
         android:textColor="#bdfcf2"
         android:layout_alignBottom="@+id/btn_help"
