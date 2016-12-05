@@ -12,8 +12,12 @@ public class GameObject {
 
     }
 
+    public String name;
     public Vector3 pos;
+    public Vector3 scale;
+    public Vector3 vel;
     public Boolean active;
+    public Boolean gravityApply = false;
 
     // Object either has sprite animation or normal texture
     public Bitmap texture;
@@ -34,5 +38,18 @@ public class GameObject {
         }
 
         return returnVec;
+    }
+
+    public void Update(float dt, Vector3 grav)
+    {
+        // Update vel based on grav
+        if (gravityApply) {
+            vel.x += grav.x;
+            vel.y += grav.y;
+        }
+
+        // Update Pos based on vel
+        pos.x += vel.x * dt;
+        pos.y += vel.y * dt;
     }
 }

@@ -80,11 +80,14 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     // Timer
     float f_timer;
 
-    // GameObject List
-    LinkedList<GameObject> m_GoList = new LinkedList<GameObject>();
-
     // Player
     GameObject m_Player;
+
+    // LoadMap
+    LevelLoader levelLoader;
+
+    // Gravity
+    Vector3 m_Gravity;
 
     //constructor for this GamePanelSurfaceView class
     public GamePanelSurfaceView(Context context) {
@@ -137,8 +140,20 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         // GameState
         GameState = GAME_STATES.START_UP;
 
+        // MeshList
+        GameObjectManager.getInstance().InitMeshlist(this.getContext(),ScreenWidth ,ScreenHeight);
+
         // GameObjects
-        m_Player = CreateGameObject(new Vector3(0, 700, 0), shipArr[0], true);
+        m_Player = GameObjectManager.getInstance().CreateGameObject(new Vector3(0, 700, 0), shipArr[0], true);
+        m_Player.gravityApply = true;
+
+        // LoadMap
+        levelLoader = new LevelLoader(this.getContext());
+        levelLoader.Init(ScreenWidth, ScreenHeight);
+        levelLoader.LoadLevel(1);
+
+        // Gravity
+        m_Gravity = new Vector3(0, 9.8f, 0);
     }
 
     //must implement inherited abstract methods
@@ -198,6 +213,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         RenderBackground(canvas);
         RenderPlayer(canvas);
 
+        // Render Objects
+        RenderGameObjects(canvas);
+
         // Print FPS
         RenderTextOnScreen(canvas, "FPS: " + FPS, 130, 75, 50);
 
@@ -231,10 +249,12 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
     private void RenderGameObjects(Canvas canvas)
     {
-        for (GameObject i : m_GoList)
+        for (GameObject i : GameObjectManager.getInstance().m_GoList)
         {
             if (!i.active)
                 continue;
+
+            int size = GameObjectManager.getInstance().m_GoList.size();
 
             if (i.IsBitmap)
             {
@@ -283,9 +303,33 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                 // Make SpriteAnim
                 anim_coin.update(System.currentTimeMillis());
+
+                boolean CanPlayerMove = true;
+
+                // Update GameObjects
+                for (GameObject i : GameObjectManager.getInstance().m_GoList)
+                {
+                    if (!i.active)
+                    continue;
+
+                    // Update all objects except player
+                    if (!i.equals(m_Player))
+                    {
+                        i.Update(dt, m_Gravity);
+
+                        if (CheckCollision(m_Player, i))
+                        {
+                            CanPlayerMove = false;
+                        }
+                    }
+                }
+
+                // Update Player
+                if (CanPlayerMove)
+                    m_Player.Update(dt, m_Gravity);
+
                 break;
             }
-
         }
     }
 
@@ -486,39 +530,6 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                 return true;
         }
         return false;
-    }
-
-
-    public GameObject CreateGameObject(Vector3 pos, Bitmap texture, Boolean active)
-    {
-        GameObject test = new GameObject();
-
-        test.active = active;
-        test.pos = pos;
-        test.texture = texture;
-        test.spriteAnimation = null;
-
-        test.IsBitmap = true;
-
-        m_GoList.push(test);
-
-        return test;
-    }
-
-    public GameObject CreateGameObject(Vector3 pos, SpriteAnimation spriteAnimation, Boolean active)
-    {
-        GameObject test = new GameObject();
-
-        test.active = active;
-        test.pos = pos;
-        test.spriteAnimation = spriteAnimation;
-        test.texture = null;
-
-        test.IsBitmap = false;
-
-        m_GoList.push(test);
-
-        return test;
     }
 
 }

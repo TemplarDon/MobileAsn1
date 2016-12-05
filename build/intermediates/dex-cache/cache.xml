@@ -7,17 +7,17 @@
         jumboMode="true"
         optimize="true"
         revision="25.0.0"
-        sha1="b86e45acdcb3acb7f2784a2260d50daded59b5b1">
-        <dex dex="C:\Users\Shania\Desktop\Mobile\app\build\intermediates\transforms\dex\debug\folders\1000\10\instant-run-bootstrap_136e7dd041de9c57299c0d9599e3fee9384c308d\classes.dex" />
+        sha1="4734c9afecfbfd6384494e6035b8578a89f11863">
+        <dex dex="D:\Poly Stuff (Hardrive)\YEAR 2\S2\Mobile\MobileAsn1\app\build\intermediates\transforms\dex\debug\folders\1000\10\instant-run-bootstrap_697a935092e57c7c4ca7bec0f3a2ad91ba8b88c0\classes.dex" />
     </item>
     <item
         is-multidex="true"
-        jar="C:\Users\Shania\Desktop\Mobile\app\build\intermediates\incremental-runtime-classes\debug\instant-run.jar"
+        jar="D:\Poly Stuff (Hardrive)\YEAR 2\S2\Mobile\MobileAsn1\app\build\intermediates\incremental-runtime-classes\debug\instant-run.jar"
         jumboMode="true"
         optimize="true"
         revision="25.0.0"
-        sha1="08717dab00f6fe0f0278c50760fd42c1566a19f5">
-        <dex dex="C:\Users\Shania\Desktop\Mobile\app\build\intermediates\transforms\dex\debug\folders\1000\10\instant-run_b8a073845fafb4f4d353a8d57f3545ed1e22fe27\classes.dex" />
+        sha1="3ec99c777a33ceb976a6b0703be453e326a6776f">
+        <dex dex="D:\Poly Stuff (Hardrive)\YEAR 2\S2\Mobile\MobileAsn1\app\build\intermediates\transforms\dex\debug\folders\1000\10\instant-run_cdd67bec359b7a167548b943c6f29fd735febed7\classes.dex" />
     </item>
 
 </items>
