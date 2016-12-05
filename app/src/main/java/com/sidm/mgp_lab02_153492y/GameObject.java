@@ -52,4 +52,21 @@ public class GameObject {
         pos.x += vel.x * dt;
         pos.y += vel.y * dt;
     }
+
+    // Overloaded for player
+    public void Update(float dt, Vector3 grav, boolean vertical, boolean horizontal)
+    {
+        // Update vel based on grav
+        if (gravityApply && vertical) {
+            vel.x += grav.x;
+            vel.y += grav.y;
+        }
+
+        // Update Pos based on vel
+        if (horizontal)
+            pos.x += vel.x * dt;
+
+        if (vertical)
+            pos.y += vel.y * dt;
+    }
 }

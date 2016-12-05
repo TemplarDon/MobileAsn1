@@ -33,10 +33,12 @@ public class LevelLoader {
         TileHeight = ScreenHeight / levelGridHeight;
     }
 
-    public void LoadLevel(int lvlNum)
+    public Level LoadLevel(int lvlNum)
     {
         InputStream inputStream = m_Context.getResources().openRawResource(R.raw.lvl1);
         BufferedReader bufferedReader= new BufferedReader(new InputStreamReader(inputStream));
+
+        Level returnLvl = new Level(levelGridWidth, levelGridHeight, TileWidth * levelGridWidth);
 
         try {
             String line ;
@@ -50,7 +52,9 @@ public class LevelLoader {
 
                 for (int width = 0; width < levelGridWidth; ++width)
                 {
-                    Vector3 pos = new Vector3(width * TileWidth, height * TileHeight, 0);
+                    //int offset = GameObjectManager.getInstance().meshList.get("ground").getWidth() / 2;
+                    int offset = 0;
+                    Vector3 pos = new Vector3(offset + width * TileWidth, height * TileHeight, 0);
 
                     switch (Integer.parseInt(parts[width]))
                     {
@@ -79,6 +83,7 @@ public class LevelLoader {
             e.printStackTrace();
         }
 
+        return returnLvl;
     }
 
 }

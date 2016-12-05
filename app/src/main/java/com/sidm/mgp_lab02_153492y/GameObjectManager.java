@@ -24,8 +24,8 @@ public class GameObjectManager {
 
     public static void InitMeshlist(Context c, int ScreenWidth, int ScreenHeight)
     {
-        //meshList.put("ground", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.test), ScreenWidth / 5, ScreenHeight / 5, true));
-        meshList.put("ground", BitmapFactory.decodeResource(c.getResources(), R.drawable.test2));
+        meshList.put("ground", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.test), ScreenWidth / 16, ScreenHeight / 12, true));
+        //meshList.put("ground", BitmapFactory.decodeResource(c.getResources(), R.drawable.test2));
         meshList.put("pallet", BitmapFactory.decodeResource(c.getResources(), R.drawable.test));
         meshList.put("rope", BitmapFactory.decodeResource(c.getResources(), R.drawable.test));
     }

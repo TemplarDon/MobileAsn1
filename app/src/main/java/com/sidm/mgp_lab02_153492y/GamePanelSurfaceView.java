@@ -39,7 +39,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     private short shipArrIdx = 0;
 
     // 2 variables to place ship, based on touch on screen
-    private short mX = 0, mY = 0;
+    //private short mX = 0, mY = 0;
 
     // Variables for FPS
     public float FPS;
@@ -89,6 +89,13 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     // Gravity
     Vector3 m_Gravity;
 
+    // Screen Move Rate
+    int ScreenMoveRate;
+
+    // Level
+    Level CurrLevel;
+    Level NextLevel;
+
     //constructor for this GamePanelSurfaceView class
     public GamePanelSurfaceView(Context context) {
 
@@ -108,10 +115,10 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         ScaledBackground = Bitmap.createScaledBitmap(Background, ScreenWidth, ScreenHeight, true);
 
         // 4c) Load the images of the spaceships
-        shipArr[0] = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ship2_1), ScreenWidth / 5, ScreenHeight / 5, true);
-        shipArr[1] = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ship2_2), ScreenWidth / 5, ScreenHeight / 5, true);
-        shipArr[2] = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ship2_3), ScreenWidth / 5, ScreenHeight / 5, true);
-        shipArr[3] = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ship2_4), ScreenWidth / 5, ScreenHeight / 5, true);
+        shipArr[0] = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ship2_1), ScreenWidth / 8, ScreenHeight / 6, true);
+        shipArr[1] = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ship2_2), ScreenWidth / 8, ScreenHeight / 6, true);
+        shipArr[2] = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ship2_3), ScreenWidth / 8, ScreenHeight / 6, true);
+        shipArr[3] = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ship2_4), ScreenWidth / 8, ScreenHeight / 6, true);
 
         // Load the sprite sheet
         anim_coin = new SpriteAnimation(Bitmap.createScaledBitmap(
@@ -126,13 +133,13 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
         // Load Button Images
         btn_slide_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.button), ScreenWidth / 8, ScreenHeight / 8, true);
-        btn_slide_pos = new Vector3(0, 1250, 0);
+        btn_slide_pos = new Vector3(0, 7 * ScreenHeight / 8, 0);
 
         btn_pause_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.button), ScreenWidth / 8, ScreenHeight / 8, true);
-        btn_pause_pos = new Vector3(2250, 0, 0);
+        btn_pause_pos = new Vector3(7 * ScreenWidth / 8, 0, 0);
 
         btn_start_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.button), ScreenWidth / 4, ScreenHeight / 4, true);
-        btn_start_pos = new Vector3(1100, 600, 0);
+        btn_start_pos = new Vector3(ScreenWidth / 4, ScreenHeight / 3, 0);
 
         // Timer
         f_timer = 0.f;
@@ -146,14 +153,23 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         // GameObjects
         m_Player = GameObjectManager.getInstance().CreateGameObject(new Vector3(0, 700, 0), shipArr[0], true);
         m_Player.gravityApply = true;
+        m_Player.vel = new Vector3(300,0,0);
 
         // LoadMap
         levelLoader = new LevelLoader(this.getContext());
         levelLoader.Init(ScreenWidth, ScreenHeight);
-        levelLoader.LoadLevel(1);
+
+        // Levels
+        CurrLevel = levelLoader.LoadLevel(1);
+        NextLevel = levelLoader.LoadLevel(1);
 
         // Gravity
         m_Gravity = new Vector3(0, 9.8f, 0);
+
+        // Screen Move Rate
+        ScreenMoveRate = 1200;
+
+
     }
 
     //must implement inherited abstract methods
@@ -290,12 +306,14 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
             case INGAME: {
                 // 3) Update the background to allow panning effect
-                bgX -= 250 * dt;
+                bgX -= ScreenMoveRate * dt;
 
                 if (bgX < -ScreenWidth) {
                     bgX = 0;
                 }
 
+                CurrLevel.Update(dt, ScreenMoveRate);
+                NextLevel.Update(dt, ScreenMoveRate);
 
                 // 4e) Update the spaceship images / shipIndex so that the animation will occur.
                 shipArrIdx++;
@@ -304,7 +322,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                 // Make SpriteAnim
                 anim_coin.update(System.currentTimeMillis());
 
-                boolean CanPlayerMove = true;
+                boolean CanPlayerMoveVertical = true;
+                boolean CanPlayerMoveHorizontal = true;
 
                 // Update GameObjects
                 for (GameObject i : GameObjectManager.getInstance().m_GoList)
@@ -317,16 +336,27 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     {
                         i.Update(dt, m_Gravity);
 
-                        if (CheckCollision(m_Player, i))
+                        if (CheckCollision(m_Player, i, 0))
                         {
-                            CanPlayerMove = false;
+                            Float checkX = m_Player.pos.x;
+                            Float checkY = m_Player.pos.y;
+
+                            if (checkY < i.pos.y) {
+                                CanPlayerMoveVertical = false;
+                                m_Player.vel.y = -9.8f;
+                            }
+
+                            else if (checkX < i.pos.x) {
+                                CanPlayerMoveHorizontal = false;
+                                m_Player.vel.x = 0;
+                            }
                         }
                     }
                 }
 
                 // Update Player
-                if (CanPlayerMove)
-                    m_Player.Update(dt, m_Gravity);
+                m_Player.Update(dt, m_Gravity);
+                m_Player.vel.x = 300;
 
                 break;
             }
@@ -476,15 +506,15 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     }
 
     // Collision Check w/ GameObjects
-    public boolean CheckCollision(GameObject go1, GameObject go2) {
+    public boolean CheckCollision(GameObject go1, GameObject go2, float offset) {
 
-        int h1 = (int)(go1.GetScale().y);
-        int w1 = (int)(go1.GetScale().x);
+        int h1 = (int)(go1.GetScale().y + offset);
+        int w1 = (int)(go1.GetScale().x + offset);
         int x1 = (int)(go1.pos.x - w1 / 2);
         int y1 = (int)(go1.pos.y - h1 / 2);
 
-        int h2 = (int)(go2.GetScale().y);
-        int w2 = (int)(go2.GetScale().x);
+        int h2 = (int)(go2.GetScale().y + offset);
+        int w2 = (int)(go2.GetScale().x + offset);
         int x2 = (int)(go2.pos.x - w2 / 2);
         int y2 = (int)(go2.pos.y - h2 / 2);
 
