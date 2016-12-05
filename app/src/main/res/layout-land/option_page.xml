@@ -22,10 +22,30 @@
         android:layout_centerHorizontal="true" />
 
     <Button
-        android:text="Back"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:background="@drawable/back_button"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
         android:id="@+id/btn_back" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sound: "
+        android:textSize="30dp"
+        android:textColor="#bdfcf2"
+        android:layout_marginTop="100dp"
+        android:layout_marginLeft="190dp" />
+
+    <Button
+        android:background="@drawable/on_button"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="102dp"
+        android:layout_marginLeft="300dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:id="@+id/btn_on" />
+
 </RelativeLayout>
