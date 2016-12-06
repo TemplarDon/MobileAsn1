@@ -3,6 +3,7 @@ package com.sidm.mgp_lab02_153492y;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Camera;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.DisplayMetrics;
@@ -91,6 +92,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
     // Screen Move Rate
     int ScreenMoveRate;
+    int BGMoveRate;
+    int ScreenOffset;
+    boolean MoveScreen;
 
     // Level
     Level CurrLevel;
@@ -153,23 +157,24 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         // GameObjects
         m_Player = GameObjectManager.getInstance().CreateGameObject(new Vector3(0, 700, 0), shipArr[0], true);
         m_Player.gravityApply = true;
-        m_Player.vel = new Vector3(300,0,0);
+        m_Player.vel = new Vector3(0,0,0);
 
         // LoadMap
         levelLoader = new LevelLoader(this.getContext());
         levelLoader.Init(ScreenWidth, ScreenHeight);
 
         // Levels
-        CurrLevel = levelLoader.LoadLevel(1);
-        NextLevel = levelLoader.LoadLevel(1);
+        CurrLevel = levelLoader.LoadLevel(1, true);
+        NextLevel = levelLoader.LoadLevel(1, false);
 
         // Gravity
         m_Gravity = new Vector3(0, 9.8f, 0);
 
         // Screen Move Rate
-        ScreenMoveRate = 1200;
-
-
+        ScreenMoveRate = 200;
+        BGMoveRate = 100;
+        ScreenOffset = 0;
+        MoveScreen = true;
     }
 
     //must implement inherited abstract methods
@@ -305,16 +310,6 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
 
             case INGAME: {
-                // 3) Update the background to allow panning effect
-                bgX -= ScreenMoveRate * dt;
-
-                if (bgX < -ScreenWidth) {
-                    bgX = 0;
-                }
-
-                CurrLevel.Update(dt, ScreenMoveRate);
-                NextLevel.Update(dt, ScreenMoveRate);
-
                 // 4e) Update the spaceship images / shipIndex so that the animation will occur.
                 shipArrIdx++;
                 shipArrIdx %= 4;
@@ -322,42 +317,94 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                 // Make SpriteAnim
                 anim_coin.update(System.currentTimeMillis());
 
-                boolean CanPlayerMoveVertical = true;
-                boolean CanPlayerMoveHorizontal = true;
-
                 // Update GameObjects
+                for (GameObject i : GameObjectManager.getInstance().m_GoList) {
+
+                    // Update all objects except player
+                    if (MoveScreen) {
+                        i.Update(dt, m_Gravity);
+                    }
+
+                    // Any Object with x < 0, set active to false
+                    if (i.pos.x < -5)
+                        i.active = false;
+                }
+
+                // Update Screen Values
+                if (MoveScreen)
+                {
+                    ScreenOffset += ScreenMoveRate * dt;
+
+                    CurrLevel.Update(dt, ScreenMoveRate);
+                    NextLevel.Update(dt, ScreenMoveRate);
+
+                    // Do level switch if needed
+                    if (!CurrLevel.m_OnScreen)
+                    {
+                        CurrLevel = NextLevel;
+                        CurrLevel.m_LevelLength = ScreenWidth;
+
+                        NextLevel = levelLoader.LoadLevel(1, false);
+
+                        // Delete any object
+                    }
+
+                    // Update BG
+                    bgX -= BGMoveRate * dt;
+
+                    if (bgX < -ScreenWidth) {
+                        bgX = 0;
+                    }
+                }
+
+                // Check Collision
                 for (GameObject i : GameObjectManager.getInstance().m_GoList)
                 {
                     if (!i.active)
-                    continue;
+                        continue;
+
 
                     // Update all objects except player
                     if (!i.equals(m_Player))
                     {
-                        i.Update(dt, m_Gravity);
-
-                        if (CheckCollision(m_Player, i, 0))
+                        if (CheckCollision(m_Player, i, 0, dt))
                         {
-                            Float checkX = m_Player.pos.x;
-                            Float checkY = m_Player.pos.y;
-
+                            int checkX = (int)(m_Player.pos.x);
+                            int checkY = (int)(m_Player.pos.y);
                             if (checkY < i.pos.y) {
-                                CanPlayerMoveVertical = false;
                                 m_Player.vel.y = -9.8f;
                             }
-
                             else if (checkX < i.pos.x) {
-                                CanPlayerMoveHorizontal = false;
-                                m_Player.vel.x = 0;
+                                MoveScreen = false;
                             }
                         }
+                        else
+                            MoveScreen = true;
+
+/*                        int checkX = (int)(m_Player.pos.x + ScreenOffset) / levelLoader.TileWidth;
+                        int checkY = (int)m_Player.pos.y / levelLoader.TileHeight;
+
+                        // Check below
+                        if ((CurrLevel.m_CollisionGrid[checkY + 2][checkX] == 1) || (CurrLevel.m_CollisionGrid[checkY + 2][checkX + 1] == 1))
+                        {
+                            CanPlayerMoveVertical = false;
+                            m_Player.vel.y = -9.8f;
+                        }
+
+                        // Check Right
+                        if ((CurrLevel.m_CollisionGrid[checkY][checkX + 1] == 1))
+                        {
+                            CanPlayerMoveHorizontal = false;
+                        }*/
                     }
                 }
 
-                // Update Player
-                m_Player.Update(dt, m_Gravity);
-                m_Player.vel.x = 300;
-
+/*                for (GameObject i : GameObjectManager.getInstance().m_GoList) {
+                    if (!i.active) {
+                        // Delete unwanted objects
+                        GameObjectManager.getInstance().m_GoList.remove(i);
+                    }
+                }*/
                 break;
             }
         }
@@ -506,17 +553,17 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     }
 
     // Collision Check w/ GameObjects
-    public boolean CheckCollision(GameObject go1, GameObject go2, float offset) {
+    public boolean CheckCollision(GameObject go1, GameObject go2, float offset, float dt) {
 
         int h1 = (int)(go1.GetScale().y + offset);
         int w1 = (int)(go1.GetScale().x + offset);
-        int x1 = (int)(go1.pos.x - w1 / 2);
-        int y1 = (int)(go1.pos.y - h1 / 2);
+        int x1 = (int)((go1.pos.x + go1.vel.x * dt) - w1 / 2);
+        int y1 = (int)((go1.pos.y + go1.vel.y * dt) - h1 / 2);
 
         int h2 = (int)(go2.GetScale().y + offset);
         int w2 = (int)(go2.GetScale().x + offset);
-        int x2 = (int)(go2.pos.x - w2 / 2);
-        int y2 = (int)(go2.pos.y - h2 / 2);
+        int x2 = (int)((go2.pos.x + go2.vel.x * dt) - w2 / 2);
+        int y2 = (int)((go2.pos.y + go2.vel.y * dt) - h2 / 2);
 
         Vector3 box1_TopLeft = new Vector3(x1, y1, 0);
         Vector3 box1_TopRight = new Vector3(x1 + w1, y1, 0);

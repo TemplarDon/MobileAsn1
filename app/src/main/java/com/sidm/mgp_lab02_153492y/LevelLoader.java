@@ -17,10 +17,10 @@ public class LevelLoader {
 
     Context m_Context;
 
-    int levelGridHeight = 12;
-    int levelGridWidth = 16;
-    int TileWidth;
-    int TileHeight;
+    public int levelGridHeight = 12;
+    public int levelGridWidth = 16;
+    public int TileWidth;
+    public int TileHeight;
 
     public LevelLoader(Context c)
     {
@@ -33,18 +33,30 @@ public class LevelLoader {
         TileHeight = ScreenHeight / levelGridHeight;
     }
 
-    public Level LoadLevel(int lvlNum)
+    public Level LoadLevel(int lvlNum, boolean firstLevel)
     {
         InputStream inputStream = m_Context.getResources().openRawResource(R.raw.lvl1);
         BufferedReader bufferedReader= new BufferedReader(new InputStreamReader(inputStream));
 
-        Level returnLvl = new Level(levelGridWidth, levelGridHeight, TileWidth * levelGridWidth);
+        Level returnLvl;
+        int offset = 0;
+        if (firstLevel) {
+            returnLvl = new Level(levelGridWidth, levelGridHeight, TileWidth * levelGridWidth);
+            offset = 0;
+        }
+        else{
+            returnLvl = new Level(levelGridWidth, levelGridHeight, 2 * TileWidth * levelGridWidth);
+            offset = TileWidth * levelGridWidth;
+        }
+
 
         try {
             String line ;
             int height = 0;
 
             //LinkedList<LinkedList<Integer>> m_ScreenMap = new LinkedList<LinkedList<Integer>>();
+
+            GameObject temp;
 
             while((line = bufferedReader.readLine()) != null)
             {
@@ -53,17 +65,18 @@ public class LevelLoader {
                 for (int width = 0; width < levelGridWidth; ++width)
                 {
                     //int offset = GameObjectManager.getInstance().meshList.get("ground").getWidth() / 2;
-                    int offset = 0;
                     Vector3 pos = new Vector3(offset + width * TileWidth, height * TileHeight, 0);
 
                     switch (Integer.parseInt(parts[width]))
                     {
                         case 1:
-                            GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().meshList.get("ground"), true);
+                            temp = GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().meshList.get("ground"), true);
+                            temp.vel.x = -200;
+                            returnLvl.m_CollisionGrid[height][width] = 1;
                             break;
 
                         case 2:
-                            GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().meshList.get("pallet"), true);
+
                             break;
 
                         case 3:
