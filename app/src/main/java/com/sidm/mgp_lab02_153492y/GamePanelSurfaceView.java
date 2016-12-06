@@ -324,8 +324,6 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                 if(jumping == true)
                 {
-                    m_Player.vel.y = m_Player.vel.y + (float)(-9.8) * dt;
-                    m_Player.pos.y = m_Player.pos.y + m_Player.vel.y * dt;
                     jumping = false;
                 }
 
@@ -364,8 +362,6 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         CurrLevel.m_LevelLength = ScreenWidth;
 
                         NextLevel = levelLoader.LoadLevel(1, false);
-
-                        // Delete any object
                     }
 
                     // Update BG
@@ -513,7 +509,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         //m_Player.pos.y -= (float) 200;
                         //Jump(dt);
                         jumping = true;
-                        m_Player.vel.y = -200;
+                        m_Player.vel.y = -700;
 
                         //GameState = GAME_STATES.START_UP;
                     }
