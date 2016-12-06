@@ -66,6 +66,10 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     protected boolean b_moveShip = false;
 
     // Buttons
+    private Button btn_jump;
+    private Bitmap btn_jump_tex;
+    Vector3 btn_jump_pos;
+
     private Button btn_slide;
     private Bitmap btn_slide_tex;
     Vector3 btn_slide_pos;
@@ -83,6 +87,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
     // Player
     GameObject m_Player;
+
+    // Jump
+    boolean jumping;
 
     // LoadMap
     LevelLoader levelLoader;
@@ -136,8 +143,11 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         setFocusable(true);
 
         // Load Button Images
+        btn_jump_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.button), ScreenWidth / 8, ScreenHeight / 8, true);
+        btn_jump_pos = new Vector3(0, 7 * ScreenHeight / 8, 0);
+
         btn_slide_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.button), ScreenWidth / 8, ScreenHeight / 8, true);
-        btn_slide_pos = new Vector3(0, 7 * ScreenHeight / 8, 0);
+        btn_slide_pos = new Vector3(0, 5 * ScreenHeight / 8, 0);
 
         btn_pause_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.button), ScreenWidth / 8, ScreenHeight / 8, true);
         btn_pause_pos = new Vector3(7 * ScreenWidth / 8, 0, 0);
@@ -245,6 +255,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         anim_coin.setX(coinX);
         anim_coin.setY(coinY);
 
+        RenderButton(canvas, btn_jump_tex, btn_jump_pos);
         RenderButton(canvas, btn_slide_tex, btn_slide_pos);
         RenderButton(canvas, btn_pause_tex, btn_pause_pos);
 
@@ -310,6 +321,14 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
 
             case INGAME: {
+
+                if(jumping == true)
+                {
+                    m_Player.vel.y = m_Player.vel.y + (float)(-9.8) * dt;
+                    m_Player.pos.y = m_Player.pos.y + m_Player.vel.y * dt;
+                    jumping = false;
+                }
+
                 // 4e) Update the spaceship images / shipIndex so that the animation will occur.
                 shipArrIdx++;
                 shipArrIdx %= 4;
@@ -436,6 +455,13 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         canvas.drawText(text, posX, posY, paint);
     }
 
+    // Jump
+    public void Jump(float dt)
+    {
+        m_Player.pos.x = m_Player.pos.x + m_Player.vel.x * dt;
+        m_Player.vel.x = m_Player.vel.x + (float)(-9.8) * dt;
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
@@ -462,14 +488,15 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                 // To check finger touch x,y within image, i.e holding down on the image
                 // Check if button pressed
-                if (GameState == GAME_STATES.START_UP) {
+                if (GameState == GAME_STATES.START_UP) // START UP
+                {
                     if (CheckCollision(
                             (int) btn_start_pos.x, (int) btn_start_pos.y, btn_start_tex.getWidth(), btn_start_tex.getHeight(),
                             m_touchX, m_touchY, 0, 0)) {
                         GameState = GAME_STATES.INGAME;
                     }
                 }
-                else
+                else if(GameState == GAME_STATES.INGAME) // IN GAME
                 {
                     if (CheckCollision(
                             (int)m_Player.pos.x, (int)m_Player.pos.y, (int)m_Player.GetScale().x, (int)m_Player.GetScale().y,
@@ -477,6 +504,30 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         b_moveShip = true;
                     else
                         b_moveShip = false;
+
+
+
+                    // JUMP BUTTON
+                    if (CheckCollision((int) btn_jump_pos.x, (int) btn_jump_pos.y, btn_jump_tex.getWidth(), btn_jump_tex.getHeight(), m_touchX, m_touchY, 0, 0))
+                    {
+                        //m_Player.pos.y -= (float) 200;
+                        //Jump(dt);
+                        jumping = true;
+                        m_Player.vel.y = -200;
+
+                        //GameState = GAME_STATES.START_UP;
+                    }
+                    // SLIDE BUTTON
+                    if (CheckCollision(
+                            (int) btn_slide_pos.x, (int) btn_slide_pos.y, btn_slide_tex.getWidth(), btn_slide_tex.getHeight(),
+                            m_touchX, m_touchY, 0, 0)) {
+                        GameState = GAME_STATES.START_UP;
+                    }
+                    // PAUSE BUTTON
+                    if (CheckCollision((int) btn_pause_pos.x, (int) btn_pause_pos.y, btn_pause_tex.getWidth(), btn_pause_tex.getHeight(), m_touchX, m_touchY, 0, 0)) {
+                        m_Player.pos.x = 0;
+                        //GameState = GAME_STATES.START_UP;
+                    }
                 }
 
                 break;

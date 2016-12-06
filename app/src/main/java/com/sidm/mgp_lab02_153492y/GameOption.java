@@ -2,6 +2,7 @@ package com.sidm.mgp_lab02_153492y;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -16,6 +17,8 @@ import java.nio.charset.MalformedInputException;
  */
 
 public class GameOption extends Activity implements OnClickListener {
+
+    MediaPlayer mySound;
 
     private Button btn_back;
     private Button btn_on;
@@ -35,7 +38,12 @@ public class GameOption extends Activity implements OnClickListener {
         btn_on = (Button)findViewById(R.id.btn_on);
         btn_on.setOnClickListener(this);
 
+        btn_off = (Button)findViewById(R.id.btn_off);
+        btn_off.setOnClickListener(this);
+
+        mySound = MediaPlayer.create(this, R.raw.music);
     }
+
 
     @Override
     public void onClick(View v) {
@@ -45,10 +53,10 @@ public class GameOption extends Activity implements OnClickListener {
             intent.setClass(this, Mainmenu.class);
         }
         else if( v == btn_on){
-
+            intent.setClass(this, GameOption.class);
         }
-        else if(v == btn_on){
-
+        else if(v == btn_off){
+            intent.setClass(this, GameOption.class);
         }
 
         // Start activity based on intent

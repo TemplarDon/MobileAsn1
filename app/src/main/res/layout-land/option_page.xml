@@ -42,10 +42,20 @@
         android:background="@drawable/on_button"
         android:layout_width="80dp"
         android:layout_height="30dp"
-        android:layout_marginTop="102dp"
+        android:layout_marginTop="105dp"
         android:layout_marginLeft="300dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
         android:id="@+id/btn_on" />
+
+    <Button
+        android:background="@drawable/off_button"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="150dp"
+        android:layout_marginLeft="300dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:id="@+id/btn_off" />
 
 </RelativeLayout>
