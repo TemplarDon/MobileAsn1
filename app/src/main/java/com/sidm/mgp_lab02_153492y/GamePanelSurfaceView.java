@@ -89,7 +89,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     GameObject m_Player;
 
     // Jump
-    boolean jumping;
+    //boolean jumping;
 
     // LoadMap
     LevelLoader levelLoader;
@@ -322,10 +322,10 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
             case INGAME: {
 
-                if(jumping == true)
+/*                if(jumping == true)
                 {
                     jumping = false;
-                }
+                }*/
 
                 // 4e) Update the spaceship images / shipIndex so that the animation will occur.
                 shipArrIdx++;
@@ -337,8 +337,15 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                 // Update GameObjects
                 for (GameObject i : GameObjectManager.getInstance().m_GoList) {
 
+                    if (!i.active)
+                        continue;
+
+                    // Update Player
+                    if (i.equals(m_Player))
+                        i.Update(dt, m_Gravity);
+
                     // Update all objects except player
-                    if (MoveScreen) {
+                    if (MoveScreen && !i.equals(m_Player)) {
                         i.Update(dt, m_Gravity);
                     }
 
@@ -382,12 +389,13 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     // Update all objects except player
                     if (!i.equals(m_Player))
                     {
-                        if (CheckCollision(m_Player, i, 0, dt))
+                        if (CheckCollision(m_Player, i, m_Player.pos.x + m_Player.texture.getWidth() / 3, dt))
                         {
-                            int checkX = (int)(m_Player.pos.x);
-                            int checkY = (int)(m_Player.pos.y);
+                            int checkX = (int)(m_Player.pos.x + m_Player.texture.getWidth() / 3);
+                            int checkY = (int)(m_Player.pos.y + m_Player.texture.getHeight() / 2);
                             if (checkY < i.pos.y) {
-                                m_Player.vel.y = -9.8f;
+                                if (m_Player.IsFalling)
+                                    m_Player.vel.y = -9.8f;
                             }
                             else if (checkX < i.pos.x) {
                                 MoveScreen = false;
@@ -508,8 +516,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     {
                         //m_Player.pos.y -= (float) 200;
                         //Jump(dt);
-                        jumping = true;
+
                         m_Player.vel.y = -700;
+                        m_Player.IsJumping = true;
 
                         //GameState = GAME_STATES.START_UP;
                     }
@@ -602,12 +611,12 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     // Collision Check w/ GameObjects
     public boolean CheckCollision(GameObject go1, GameObject go2, float offset, float dt) {
 
-        int h1 = (int)(go1.GetScale().y + offset);
+        int h1 = (int)(go1.GetScale().y);
         int w1 = (int)(go1.GetScale().x + offset);
         int x1 = (int)((go1.pos.x + go1.vel.x * dt) - w1 / 2);
         int y1 = (int)((go1.pos.y + go1.vel.y * dt) - h1 / 2);
 
-        int h2 = (int)(go2.GetScale().y + offset);
+        int h2 = (int)(go2.GetScale().y);
         int w2 = (int)(go2.GetScale().x + offset);
         int x2 = (int)((go2.pos.x + go2.vel.x * dt) - w2 / 2);
         int y2 = (int)((go2.pos.y + go2.vel.y * dt) - h2 / 2);

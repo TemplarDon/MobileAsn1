@@ -19,6 +19,10 @@ public class GameObject {
     public Boolean active;
     public Boolean gravityApply = false;
 
+    //public Vector3 prevPos;
+    public Boolean IsJumping = false;
+    public Boolean IsFalling = true;
+
     // Object either has sprite animation or normal texture
     public Bitmap texture;
     public SpriteAnimation spriteAnimation;
@@ -40,8 +44,11 @@ public class GameObject {
         return returnVec;
     }
 
-    public void Update(float dt, Vector3 grav)
-    {
+    public void Update(float dt, Vector3 grav) {
+
+        // Set Prev pos
+        Vector3 prevPos = new Vector3(pos.x ,pos.y, pos.z);
+
         // Update vel based on grav
         if (gravityApply) {
             vel.x += grav.x;
@@ -51,9 +58,18 @@ public class GameObject {
         // Update Pos based on vel
         pos.x += vel.x * dt;
         pos.y += vel.y * dt;
+
+        // Get Jumping/Falling boolean
+        if (pos.y >= prevPos.y) {
+            IsFalling = true;
+            IsJumping = false;
+        } else {
+            IsJumping = true;
+            IsFalling = false;
+        }
     }
 
-    // Overloaded for player
+/*    // Overloaded for player
     public void Update(float dt, Vector3 grav, boolean vertical, boolean horizontal)
     {
         // Update vel based on grav
@@ -68,5 +84,5 @@ public class GameObject {
 
         if (vertical)
             pos.y += vel.y * dt;
-    }
+    }*/
 }
