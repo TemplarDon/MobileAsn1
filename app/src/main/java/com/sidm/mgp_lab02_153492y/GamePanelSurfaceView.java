@@ -90,6 +90,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
     // Score
     int m_Score = 0;
+    float timer;
 
     // Player
     GameObject m_Player;
@@ -149,20 +150,22 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         setFocusable(true);
 
         // Load Button Images
-        btn_jump_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.jump_button), ScreenWidth / 12, ScreenHeight / 12, true);
+        btn_jump_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.jump_button), ScreenWidth / 6, ScreenHeight / 6, true);
         btn_jump_pos = new Vector3(0, 6.5f * ScreenHeight / 8, 0);
 
-        btn_slide_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.slide_button), ScreenWidth / 12, ScreenHeight / 12, true);
+        btn_slide_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.slide_button), ScreenWidth / 6, ScreenHeight / 6, true);
         btn_slide_pos = new Vector3(0, 5 * ScreenHeight / 8, 0);
 
         btn_pause_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pause_button), ScreenWidth / 10, ScreenHeight / 10, true);
         btn_pause_pos = new Vector3(8 * ScreenWidth / 9, 18, 0);
 
-        btn_start_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.button), ScreenWidth / 4, ScreenHeight / 4, true);
-        btn_start_pos = new Vector3(ScreenWidth / 4, ScreenHeight / 3, 0);
+        btn_start_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.begin_button), ScreenWidth / 3, ScreenHeight / 4, true);
+        btn_start_pos = new Vector3(ScreenWidth / 3, ScreenHeight / 3, 0);
 
         // Timer
         f_timer = 0.f;
+
+        timer = 0.f;
 
         // GameState
         GameState = GAME_STATES.START_UP;
@@ -254,7 +257,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         RenderGameObjects(canvas);
 
         // Print FPS
-        RenderTextOnScreen(canvas, "FPS: " + FPS, 130, 75, 50);
+        RenderTextOnScreen(canvas, "FPS: " + FPS, ScreenWidth / 7, ScreenHeight/ 15 , 30);
 
 
         // Print FPS
@@ -272,9 +275,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         // Debug State
         //RenderTextOnScreen(canvas, "IN-GAME", ScreenWidth /2, ScreenHeight /2, 50);
 
-        RenderTextOnScreen(canvas, "SCORE: " + Integer.toString(m_Score), ScreenWidth /2, ScreenHeight/ 12, 50);
+        RenderTextOnScreen(canvas, "SCORE: " + Integer.toString(m_Score), ScreenWidth /2, ScreenHeight/ 15, 30);
 
-        //RenderTextOnScreen(canvas, "POS.Y: " + m_Player.pos.y, ScreenWidth/2, ScreenHeight / 3, 50);
+        RenderTextOnScreen(canvas, "time: " + timer, ScreenWidth/2, ScreenHeight / 3, 50);
 
     }
 
@@ -336,6 +339,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
 
             case INGAME: {
+
+                timer += dt;
 
 /*                if(jumping == true)
                 {
@@ -419,6 +424,10 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                             if (i.KillPlayer) {
                                 // Kill player
+                                GameState = GAME_STATES.START_UP;
+                                m_Player.pos.x = 0;
+                                m_Player.pos.y = (ScreenHeight / 2);
+                                m_Score = 0;
                             }
 
                             int checkX = (int)(m_Player.pos.x + m_Player.texture.getWidth() / 3);
@@ -538,14 +547,14 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     // JUMP BUTTON
                     if (CheckCollision((int) btn_jump_pos.x, (int) btn_jump_pos.y, btn_jump_tex.getWidth(), btn_jump_tex.getHeight(), m_touchX, m_touchY, 0, 0))
                     {
-                        if(m_Player.pos.y <= 315)
+                        if(m_Player.pos.y <= 269)
                         {
                             m_Player.IsOnGround = false;
                         }
                         else
                         {
                             m_Player.IsOnGround = true;
-                            m_Player.vel.y = -200;
+                            m_Player.vel.y = -350;
                         }
                     }
                     // SLIDE BUTTON
