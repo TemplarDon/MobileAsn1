@@ -22,6 +22,7 @@ public class GameObject {
     //public Vector3 prevPos;
     public Boolean IsJumping = false;
     public Boolean IsFalling = true;
+    public Boolean IsOnGround = true;
 
     // Object either has sprite animation or normal texture
     public Bitmap texture;
@@ -66,7 +67,15 @@ public class GameObject {
         } else {
             IsJumping = true;
             IsFalling = false;
+            Jump(dt);
         }
+
+    }
+
+    public void Jump(float dt){
+
+            vel.y = vel.y + (float)(9.8) * dt;
+            pos.y = pos.y + vel.y * dt;
     }
 
 /*    // Overloaded for player
