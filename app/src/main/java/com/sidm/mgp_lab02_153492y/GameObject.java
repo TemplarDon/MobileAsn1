@@ -22,6 +22,13 @@ public class GameObject {
     //public Vector3 prevPos;
     public Boolean IsJumping = false;
     public Boolean IsFalling = true;
+    //public Boolean IsOnGround = true;
+
+    // Spike Specific
+    public Boolean KillPlayer = false;
+
+    // Rope
+    GameObject parentRope;
 
     // Object either has sprite animation or normal texture
     public Bitmap texture;
@@ -60,11 +67,18 @@ public class GameObject {
         pos.y += vel.y * dt;
 
         // Get Jumping/Falling boolean
-        if (pos.y >= prevPos.y) {
+        if (pos.y > prevPos.y) {
             IsFalling = true;
             IsJumping = false;
-        } else {
+            //IsOnGround = false;
+        } else if (pos.y < prevPos.y){
             IsJumping = true;
+            IsFalling = false;
+        }
+        else
+        {
+            //IsOnGround = true;
+            IsJumping = false;
             IsFalling = false;
         }
     }

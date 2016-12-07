@@ -25,9 +25,9 @@ public class GameObjectManager {
     public static void InitMeshlist(Context c, int ScreenWidth, int ScreenHeight)
     {
         meshList.put("ground", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.test), ScreenWidth / 16, ScreenHeight / 12, true));
-        //meshList.put("ground", BitmapFactory.decodeResource(c.getResources(), R.drawable.test2));
-        meshList.put("pallet", BitmapFactory.decodeResource(c.getResources(), R.drawable.test));
-        meshList.put("rope", BitmapFactory.decodeResource(c.getResources(), R.drawable.test));
+        meshList.put("pallet", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.ph_pallet), ScreenWidth / 16, ScreenHeight / 12, true));
+        meshList.put("rope", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.ph_rope), ScreenWidth / 16, ScreenHeight / 4, true));
+        meshList.put("spike", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.ph_spike), ScreenWidth / 16, ScreenHeight / 12, true));
     }
 
     static LinkedList<GameObject> m_GoList = new LinkedList<>();

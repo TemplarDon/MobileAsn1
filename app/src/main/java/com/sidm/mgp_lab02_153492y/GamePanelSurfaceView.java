@@ -165,7 +165,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         GameObjectManager.getInstance().InitMeshlist(this.getContext(),ScreenWidth ,ScreenHeight);
 
         // GameObjects
-        m_Player = GameObjectManager.getInstance().CreateGameObject(new Vector3(0, 700, 0), shipArr[0], true);
+        m_Player = GameObjectManager.getInstance().CreateGameObject(new Vector3(0, ScreenHeight / 2, 0), shipArr[0], true);
         m_Player.gravityApply = true;
         m_Player.vel = new Vector3(0,0,0);
 
@@ -174,11 +174,11 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         levelLoader.Init(ScreenWidth, ScreenHeight);
 
         // Levels
-        CurrLevel = levelLoader.LoadLevel(1, true);
+        CurrLevel = levelLoader.LoadLevel(0, true);
         NextLevel = levelLoader.LoadLevel(1, false);
 
         // Gravity
-        m_Gravity = new Vector3(0, 9.8f, 0);
+        m_Gravity = new Vector3(0, 15f, 0);
 
         // Screen Move Rate
         ScreenMoveRate = 200;
@@ -350,7 +350,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     }
 
                     // Any Object with x < 0, set active to false
-                    if (i.pos.x < -5)
+                    if (i.pos.x < -i.texture.getWidth() / 2)
                         i.active = false;
                 }
 
@@ -368,7 +368,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         CurrLevel = NextLevel;
                         CurrLevel.m_LevelLength = ScreenWidth;
 
-                        NextLevel = levelLoader.LoadLevel(1, false);
+                        Random rand = new Random();
+
+                        NextLevel = levelLoader.LoadLevel(rand.nextInt(2), false);
                     }
 
                     // Update BG
@@ -379,31 +381,43 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     }
                 }
 
+                MoveScreen = true;
+
                 // Check Collision
                 for (GameObject i : GameObjectManager.getInstance().m_GoList)
                 {
                     if (!i.active)
                         continue;
 
-
                     // Update all objects except player
                     if (!i.equals(m_Player))
                     {
                         if (CheckCollision(m_Player, i, m_Player.pos.x + m_Player.texture.getWidth() / 3, dt))
                         {
+                            if (i.name == "pallet")
+                            {
+                                if (!i.parentRope.active)
+                                    i.gravityApply = true;
+                            }
+
+                            if (i.KillPlayer) {
+                                // Kill player
+                            }
+
                             int checkX = (int)(m_Player.pos.x + m_Player.texture.getWidth() / 3);
                             int checkY = (int)(m_Player.pos.y + m_Player.texture.getHeight() / 2);
-                            if (checkY < i.pos.y) {
-                                if (m_Player.IsFalling)
-                                    m_Player.vel.y = -9.8f;
-                            }
-                            else if (checkX < i.pos.x) {
+
+                            if (checkX < i.pos.x) {
                                 MoveScreen = false;
                             }
-                        }
-                        else
-                            MoveScreen = true;
 
+                            if (checkY < i.pos.y) {
+                                if (m_Player.IsFalling) {
+                                    m_Player.vel.y = -9.8f;
+                                    m_Player.pos.y -= m_Player.texture.getHeight()/6;
+                                }
+                            }
+                        }
 /*                        int checkX = (int)(m_Player.pos.x + ScreenOffset) / levelLoader.TileWidth;
                         int checkY = (int)m_Player.pos.y / levelLoader.TileHeight;
 
@@ -517,7 +531,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         //m_Player.pos.y -= (float) 200;
                         //Jump(dt);
 
-                        m_Player.vel.y = -700;
+                        m_Player.vel.y = -300;
                         m_Player.IsJumping = true;
 
                         //GameState = GAME_STATES.START_UP;
@@ -554,6 +568,19 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         coinY = randomNum.nextInt(ScreenHeight);
                     }
 
+                }
+
+                for (GameObject i : GameObjectManager.getInstance().m_GoList) {
+
+                    if (!i.active || !i.name.equals("rope"))
+                        continue;
+
+                    if (CheckCollision(
+                            (int) i.pos.x, (int) i.pos.y, i.texture.getWidth(), i.texture.getHeight(),
+                            m_touchX, m_touchY, 0, 0))
+                    {
+                        i.active = false;
+                    }
                 }
                 break;
         }

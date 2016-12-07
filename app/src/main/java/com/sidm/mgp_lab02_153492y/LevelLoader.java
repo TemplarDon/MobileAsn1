@@ -35,7 +35,22 @@ public class LevelLoader {
 
     public Level LoadLevel(int lvlNum, boolean firstLevel)
     {
-        InputStream inputStream = m_Context.getResources().openRawResource(R.raw.lvl1);
+        InputStream inputStream = m_Context.getResources().openRawResource(R.raw.lvl0);
+        switch (lvlNum)
+        {
+            case 0:
+                inputStream = m_Context.getResources().openRawResource(R.raw.lvl0);
+                break;
+
+            case 1:
+                inputStream = m_Context.getResources().openRawResource(R.raw.lvl1);
+                break;
+
+            case 2:
+                inputStream = m_Context.getResources().openRawResource(R.raw.lvl2);
+                break;
+        }
+
         BufferedReader bufferedReader= new BufferedReader(new InputStreamReader(inputStream));
 
         Level returnLvl;
@@ -58,6 +73,9 @@ public class LevelLoader {
 
             GameObject temp;
 
+            // Temp Rope GameObject
+            GameObject ropePtr = new GameObject();
+
             while((line = bufferedReader.readLine()) != null)
             {
                 String[] parts = line.split(",");
@@ -69,20 +87,42 @@ public class LevelLoader {
 
                     switch (Integer.parseInt(parts[width]))
                     {
+                        // Floor Tile
                         case 1:
                             temp = GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().meshList.get("ground"), true);
                             temp.vel.x = -200;
                             returnLvl.m_CollisionGrid[height][width] = 1;
+                            temp.KillPlayer = false;
+                            temp.name = "floor";
                             break;
 
+                        // Pallet Tile
                         case 2:
-
+                            temp = GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().meshList.get("pallet"), true);
+                            temp.vel.x = -200;
+                            returnLvl.m_CollisionGrid[height][width] = 1;
+                            temp.KillPlayer = false;
+                            temp.parentRope = ropePtr;
+                            temp.name = "pallet";
                             break;
 
+                        // Rope Tile
                         case 3:
+                            temp = GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().meshList.get("rope"), true);
+                            temp.vel.x = -200;
+                            returnLvl.m_CollisionGrid[height][width] = 0;
+                            temp.KillPlayer = false;
+                            temp.name = "rope";
+                            ropePtr = temp;
                             break;
 
+                        // Spikes
                         case 4:
+                            temp = GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().meshList.get("spike"), true);
+                            temp.vel.x = -200;
+                            returnLvl.m_CollisionGrid[height][width] = 0;
+                            temp.KillPlayer = true;
+                            temp.name = "spike";
                             break;
 
                         default:
