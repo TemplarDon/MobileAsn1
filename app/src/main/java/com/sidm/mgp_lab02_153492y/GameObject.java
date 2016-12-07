@@ -22,7 +22,7 @@ public class GameObject {
     //public Vector3 prevPos;
     public Boolean IsJumping = false;
     public Boolean IsFalling = true;
-    //public Boolean IsOnGround = true;
+    public Boolean IsOnGround = true;
 
     // Spike Specific
     public Boolean KillPlayer = false;
@@ -74,6 +74,7 @@ public class GameObject {
         } else if (pos.y < prevPos.y){
             IsJumping = true;
             IsFalling = false;
+            Jump(dt);
         }
         else
         {
@@ -81,6 +82,13 @@ public class GameObject {
             IsJumping = false;
             IsFalling = false;
         }
+
+    }
+
+    public void Jump(float dt){
+
+            vel.y = vel.y + (float)(9.8) * dt;
+            pos.y = pos.y + vel.y * dt;
     }
 
 /*    // Overloaded for player

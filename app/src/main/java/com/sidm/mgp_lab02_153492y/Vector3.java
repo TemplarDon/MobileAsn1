@@ -23,6 +23,19 @@ public class Vector3 {
         this.z = c;
     }
 
+    public String VectorToStr(){
+        String str = new String();
+        str += "(";
+        str += String.valueOf(x);
+        str += ",";
+        str += String.valueOf(y);
+        str += ",";
+        str += String.valueOf(z);
+        str += ")";
+
+        return str;
+    }
+
     public Vector3(Vector3 rhs) {
         this.x = rhs.x;
         this.y = rhs.y;
