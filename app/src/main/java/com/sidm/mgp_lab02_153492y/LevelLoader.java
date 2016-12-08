@@ -33,7 +33,7 @@ public class LevelLoader {
         TileHeight = ScreenHeight / levelGridHeight;
     }
 
-    public Level LoadLevel(int lvlNum, boolean firstLevel)
+    public Level LoadLevel(int lvlNum, boolean firstLevel, int moveRate)
     {
         InputStream inputStream = m_Context.getResources().openRawResource(R.raw.lvl0);
         switch (lvlNum)
@@ -90,7 +90,7 @@ public class LevelLoader {
                         // Floor Tile
                         case 1:
                             temp = GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().meshList.get("ground"), true);
-                            temp.vel.x = -200;
+                            temp.vel.x = -moveRate;
                             returnLvl.m_CollisionGrid[height][width] = 1;
                             temp.KillPlayer = false;
                             temp.name = "floor";
@@ -99,7 +99,7 @@ public class LevelLoader {
                         // Pallet Tile
                         case 2:
                             temp = GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().meshList.get("pallet"), true);
-                            temp.vel.x = -200;
+                            temp.vel.x = -moveRate;
                             returnLvl.m_CollisionGrid[height][width] = 1;
                             temp.KillPlayer = false;
                             temp.parentRope = ropePtr;
@@ -109,7 +109,7 @@ public class LevelLoader {
                         // Rope Tile
                         case 3:
                             temp = GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().meshList.get("rope"), true);
-                            temp.vel.x = -200;
+                            temp.vel.x = -moveRate;
                             returnLvl.m_CollisionGrid[height][width] = 0;
                             temp.KillPlayer = false;
                             temp.name = "rope";
@@ -119,7 +119,7 @@ public class LevelLoader {
                         // Spikes
                         case 4:
                             temp = GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().meshList.get("spike"), true);
-                            temp.vel.x = -200;
+                            temp.vel.x = -moveRate;
                             returnLvl.m_CollisionGrid[height][width] = 0;
                             temp.KillPlayer = true;
                             temp.name = "spike";
