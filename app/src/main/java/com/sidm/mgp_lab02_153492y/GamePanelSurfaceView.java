@@ -357,6 +357,12 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     if (!i.active)
                         continue;
 
+                    // Update Pallets
+                    if (i.name == "pallet") {
+                        if (!i.parentRope.active)
+                            i.gravityApply = true;
+                    }
+
                     // Update Player
                     if (i.equals(m_Player))
                         i.Update(dt, m_Gravity);
@@ -372,16 +378,14 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                 }
 
                 // Update Screen Values
-                if (MoveScreen)
-                {
+                if (MoveScreen) {
                     ScreenOffset += ScreenMoveRate * dt;
 
                     CurrLevel.Update(dt, ScreenMoveRate);
                     NextLevel.Update(dt, ScreenMoveRate);
 
                     // Do level switch if needed
-                    if (!CurrLevel.m_OnScreen)
-                    {
+                    if (!CurrLevel.m_OnScreen) {
                         CurrLevel = NextLevel;
                         CurrLevel.m_LevelLength = ScreenWidth;
 
@@ -401,40 +405,55 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                 MoveScreen = true;
 
                 // Check Collision
-                for (GameObject i : GameObjectManager.getInstance().m_GoList)
-                {
+                for (GameObject i : GameObjectManager.getInstance().m_GoList) {
                     if (!i.active)
                         continue;
 
-                    // Update all objects except player
-                    if (!i.equals(m_Player))
-                    {
-                        if (CheckCollision(m_Player, i, m_Player.pos.x + m_Player.texture.getWidth() / 3, dt))
-                        {
-                            if (i.name == "pallet")
-                            {
-                                if (!i.parentRope.active)
-                                    i.gravityApply = true;
-                            }
+                    // Check Collision between player and objects
+                    if (!i.equals(m_Player)) {
 
-                            if (i.KillPlayer) {
-                                // Kill player
-                            }
+                        if (i.name.equals("pallet")) {
+                            for (GameObject i2 : GameObjectManager.getInstance().m_GoList) {
 
-                            int checkX = (int)(m_Player.pos.x + m_Player.texture.getWidth() / 3);
-                            int checkY = (int)(m_Player.pos.y + m_Player.texture.getHeight() / 2);
+                                if (!i2.active)
+                                    continue;
 
-                            if (checkX < i.pos.x) {
-                                MoveScreen = false;
-                            }
+                                if (i2.name.equals("spike")) {
+                                    if (CheckCollision(i, i2, 0, dt)) {
+                                        int checkX = (int) (i.pos.x);
+                                        int checkY = (int) (i.pos.y + i.texture.getHeight() / 2);
 
-                            if (checkY < i.pos.y) {
-                                if (m_Player.IsFalling) {
-                                    m_Player.vel.y = -9.8f;
-                                    m_Player.pos.y -= m_Player.texture.getHeight() / 16;
+                                        if (checkY < i2.pos.y) {
+                                            if (i.IsFalling) {
+                                                i.vel.y = -9.8f;
+                                                i.pos.y -= i.texture.getHeight() / 16;
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
+
+                            if (CheckCollision(m_Player, i, m_Player.pos.x + m_Player.texture.getWidth() / 3, dt)) {
+
+                                if (i.KillPlayer) {
+                                    // Kill player
+                                }
+
+                                int checkX = (int) (m_Player.pos.x + m_Player.texture.getWidth() / 3);
+                                int checkY = (int) (m_Player.pos.y + m_Player.texture.getHeight() / 2);
+
+                                if (checkX < i.pos.x) {
+                                    MoveScreen = false;
+                                }
+
+                                if (checkY < i.pos.y) {
+                                    if (m_Player.IsFalling) {
+                                        m_Player.vel.y = -9.8f;
+                                        m_Player.pos.y -= m_Player.texture.getHeight() / 16;
+                                    }
+                                }
+                            }
 /*                        int checkX = (int)(m_Player.pos.x + ScreenOffset) / levelLoader.TileWidth;
                         int checkY = (int)m_Player.pos.y / levelLoader.TileHeight;
 
@@ -450,8 +469,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         {
                             CanPlayerMoveHorizontal = false;
                         }*/
+                        }
                     }
-                }
 
 /*                for (GameObject i : GameObjectManager.getInstance().m_GoList) {
                     if (!i.active) {
@@ -459,10 +478,11 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         GameObjectManager.getInstance().m_GoList.remove(i);
                     }
                 }*/
-                break;
+                    break;
             }
         }
     }
+
 
     // Rendering is done on Canvas
     public void doDraw(Canvas canvas) {
@@ -584,18 +604,29 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                 }
 
-/*                for (GameObject i : GameObjectManager.getInstance().m_GoList) {
+                LinkedList<GameObject> TestGoList = new LinkedList<>();
+                //TestGoList = GameObjectManager.getInstance().m_GoList;
 
-                    if (!i.active || !i.name.equals("rope"))
+                for (GameObject i : GameObjectManager.getInstance().m_GoList) {
+                    if (!i.active && i.name.equals("rope"))
+                    {
+                        TestGoList.push(i);
+                }
+                }
+
+                for (GameObject i : GameObjectManager.getInstance().m_GoList) {
+
+                    if (!i.active)
                         continue;
 
-                    if (CheckCollision(
-                            (int) i.pos.x, (int) i.pos.y, i.texture.getWidth(), i.texture.getHeight(),
-                            m_touchX, m_touchY, 0, 0))
-                    {
-                        i.active = false;
+                        if (CheckCollision(
+                                (int) i.pos.x, (int) i.pos.y, i.texture.getWidth(), i.texture.getHeight(),
+                                m_touchX, m_touchY, 0, 0)) {
+                            if (i.name.equals("rope")) {
+                            i.active = false;
+                        }
                     }
-                }*/
+                }
                 break;
         }
 

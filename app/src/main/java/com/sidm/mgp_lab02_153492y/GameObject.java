@@ -12,7 +12,7 @@ public class GameObject {
 
     }
 
-    public String name;
+    public String name = "object";
     public Vector3 pos;
     public Vector3 scale;
     public Vector3 vel;
@@ -87,7 +87,7 @@ public class GameObject {
 
     public void Jump(float dt){
 
-            vel.y = vel.y + (float)(9.8) * dt;
+            vel.y = vel.y + (float)(15f) * dt;
             pos.y = pos.y + vel.y * dt;
     }
 
