@@ -1,6 +1,7 @@
 package com.sidm.mgp_lab02_153492y;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Camera;
@@ -11,6 +12,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.Button;
+import android.os.Vibrator;
 
 import java.util.LinkedList;
 import java.util.Random;
@@ -54,6 +56,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         START_UP,
         INGAME,
         PAUSED,
+        SHUT_DOWN,
     }
 
     // Init SpriteAnimation
@@ -78,9 +81,17 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     private Bitmap btn_pause_tex;
     Vector3 btn_pause_pos;
 
+    private Button btn_home;
+    private Bitmap btn_home_tex;
+    Vector3 btn_home_pos;
+
     private Button btn_start;
     private Bitmap btn_start_tex;
     Vector3 btn_start_pos;
+
+    private Button btn_resume;
+    private Bitmap btn_resume_tex;
+    Vector3 btn_resume_pos;
 
     // Timer
     float f_timer;
@@ -94,6 +105,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
     // Player
     GameObject m_Player;
+    private SpriteAnimation anim_player;
 
     // Jump
     boolean jumping = false;
@@ -113,6 +125,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     // Level
     Level CurrLevel;
     Level NextLevel;
+
+    Vibrator v;
 
     //constructor for this GamePanelSurfaceView class
     public GamePanelSurfaceView(Context context) {
@@ -162,6 +176,12 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         btn_start_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.begin_button), ScreenWidth / 3, ScreenHeight / 4, true);
         btn_start_pos = new Vector3(ScreenWidth / 3, ScreenHeight / 3, 0);
 
+        btn_resume_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.resume_button), ScreenWidth / 3, ScreenHeight / 4, true);
+        btn_resume_pos = new Vector3(ScreenWidth / 3, ScreenHeight / 6, 0);
+
+        btn_home_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.home_button), ScreenWidth / 3, ScreenHeight / 4, true);
+        btn_home_pos = new Vector3(ScreenWidth / 3,  ScreenHeight / 2, 0);
+
         // Timer
         f_timer = 0.f;
 
@@ -174,7 +194,10 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         GameObjectManager.getInstance().InitMeshlist(this.getContext(),ScreenWidth ,ScreenHeight);
 
         // GameObjects
-        m_Player = GameObjectManager.getInstance().CreateGameObject(new Vector3(0, ScreenHeight / 2, 0), shipArr[0], true);
+        anim_player = new SpriteAnimation(Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(getResources(), R.drawable.player_spritesheet),
+                ScreenWidth / 8, ScreenHeight / 6, true), 320, 64, 5, 5);
+        m_Player = GameObjectManager.getInstance().CreateGameObject(new Vector3(ScreenWidth / 32, ScreenHeight / 2, 0), shipArr[0], true);
         m_Player.gravityApply = true;
         m_Player.vel = new Vector3(0,0,0);
         m_Player.name = "player";
@@ -195,6 +218,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
         // Gravity
         m_Gravity = new Vector3(0, 15f, 0);
+
+        // Vibration
+        v = (Vibrator) this.getContext().getSystemService(Context.VIBRATOR_SERVICE);
     }
 
     //must implement inherited abstract methods
@@ -258,16 +284,16 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         RenderGameObjects(canvas);
 
         // Print FPS
-        RenderTextOnScreen(canvas, "FPS: " + FPS, ScreenWidth / 7, ScreenHeight/ 15 , 30);
+        RenderTextOnScreen(canvas, "FPS: " + FPS, ScreenWidth / 16, ScreenHeight/ 15 , 30);
 
 
         // Print FPS
         //RenderTextOnScreen(canvas, "vel: " + m_Player.vel.VectorToStr(), 130, 125, 50);
 
         // Draw SpriteAnim
-        anim_coin.draw(canvas);
-        anim_coin.setX(coinX);
-        anim_coin.setY(coinY);
+        //anim_coin.draw(canvas);
+        //anim_coin.setX(coinX);
+        //anim_coin.setY(coinY);
 
         RenderButton(canvas, btn_jump_tex, btn_jump_pos);
         //RenderButton(canvas, btn_slide_tex, btn_slide_pos);
@@ -278,8 +304,14 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
         RenderTextOnScreen(canvas, "SCORE: " + Integer.toString(m_Score), ScreenWidth /2, ScreenHeight/ 15, 30);
 
-        RenderTextOnScreen(canvas, "Time: " + timer, ScreenWidth/2, ScreenHeight / 3, 50);
+        //RenderTextOnScreen(canvas, "Time: " + timer, ScreenWidth/2, ScreenHeight / 3, 50);
 
+    }
+
+    public void RenderPause(Canvas canvas)
+    {
+        RenderButton(canvas, btn_resume_tex, btn_resume_pos);
+        RenderButton(canvas, btn_home_tex, btn_home_pos);
     }
 
     private void RenderBackground(Canvas canvas)
@@ -293,9 +325,16 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         canvas.drawBitmap(btnToRender, pos.x, pos.y, null);
     }
 
-    private void RenderPlayer(Canvas canvas)
-    {
-        canvas.drawBitmap(m_Player.texture, m_Player.pos.x, m_Player.pos.y, null);
+    private void RenderPlayer(Canvas canvas) {
+        if (m_Player.IsBitmap) {
+            canvas.drawBitmap(m_Player.texture, m_Player.pos.x, m_Player.pos.y, null);
+        }
+        else
+        {
+            m_Player.spriteAnimation.draw(canvas);
+            m_Player.spriteAnimation.setX((int)m_Player.pos.x);
+            m_Player.spriteAnimation.setY((int)m_Player.pos.y);
+        }
     }
 
     private void RenderGameObjects(Canvas canvas)
@@ -334,7 +373,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                 shipArrIdx %= 4;
 
                 // Make SpriteAnim
-                anim_coin.update(System.currentTimeMillis());
+                //anim_coin.update(System.currentTimeMillis());
                 break;
             }
 
@@ -355,7 +394,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                 shipArrIdx %= 4;
 
                 // Make SpriteAnim
-                anim_coin.update(System.currentTimeMillis());
+                //anim_coin.update(System.currentTimeMillis());
 
                 // Update GameObjects
                 GameObjectManager.getInstance().CleanUp(false);
@@ -364,6 +403,10 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     if (!i.active)
                         continue;
 
+                    // Update sprites
+                    if (!i.IsBitmap) {
+                        i.spriteAnimation.update(System.currentTimeMillis());
+                    }
                     // Update Pallets
                     if (i.name == "pallet") {
                         if (!i.parentRope.active)
@@ -380,8 +423,15 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     }
 
                     // Any Object with x < 0, set active to false
-                    if (i.pos.x < -i.texture.getWidth() / 2)
-                        i.active = false;
+                    if (i.IsBitmap) {
+                        if (i.pos.x < -i.texture.getWidth() / 2)
+                            i.active = false;
+                    }
+                    else
+                    {
+                        if (i.pos.x < -i.spriteAnimation.getSpriteWidth() / 2)
+                            i.active = false;
+                    }
                 }
 
                 // Update Screen Values
@@ -427,12 +477,11 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                                 if (i2.name.equals("spike")) {
                                     if (CheckCollision(i, i2, 0, dt)) {
-                                        int checkX = (int) (i.pos.x);
                                         int checkY = (int) (i.pos.y + i.texture.getHeight() / 2);
 
                                         if (checkY < i2.pos.y) {
                                             if (i.IsFalling) {
-                                                i.vel.y = -9.8f;
+                                                i.vel.y =  -(m_Gravity.y);
                                                 i.pos.y -= i.texture.getHeight() / 16;
                                             }
                                         }
@@ -441,12 +490,20 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                             }
                         }
 
-                        if (CheckCollision(m_Player, i, m_Player.pos.x + m_Player.texture.getWidth() / 3, dt)) {
-                            if (i.KillPlayer) {
+                        int offset;
+                        if (m_Player.IsBitmap)
+                            offset = m_Player.texture.getWidth() / 8;
+                        else
+                            offset = m_Player.spriteAnimation.getSpriteWidth() / 8;
+
+                        if (CheckCollision(m_Player, i, offset, dt)) {
+                            if (i.KillPlayer)
+                            {
                                 // Kill player
                                 GameState = GAME_STATES.START_UP;
-                                m_Player.pos.x = 0;
+                                m_Player.pos.x = ScreenWidth / 32;
                                 m_Player.pos.y = (ScreenHeight / 2);
+                                m_Player.vel.y = 0;
                                 m_Score = 0;
                                 timer = 0;
                                 GameObjectManager.getInstance().CleanUp(true);
@@ -455,19 +512,34 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                                 break;
                             }
 
-                            int checkX = (int) (m_Player.pos.x + m_Player.texture.getWidth() / 8);
-                            int checkY = (int) (m_Player.pos.y + m_Player.texture.getHeight() / 2);
-
+                            int checkX;
+                            int checkY;
+                            if (m_Player.IsBitmap)
+                            {
+                                checkX = (int) (m_Player.pos.x + m_Player.texture.getWidth() / 8);
+                                checkY = (int) (m_Player.pos.y + m_Player.texture.getHeight() / 3);
+                            }
+                            else {
+                                checkX = (int) (m_Player.pos.x + m_Player.spriteAnimation.getSpriteWidth() / 3);
+                                checkY = (int) (m_Player.pos.y + m_Player.spriteAnimation.getSpriteHeight() / 3);
+                            }
                             if (checkX < i.pos.x) {
                                 if (!i.name.equals("pallet"))
                                     MoveScreen = false;
                             }
 
-                            if (checkY < i.pos.y) {
+                            else if (checkY < i.pos.y) {
                                 if (m_Player.IsFalling) {
-                                    m_Player.vel.y = -9.8f;
+                                    m_Player.vel.y = -(m_Gravity.y);
+                                    //m_Player.pos.y -= m_Player.spriteAnimation.getSpriteHeight();
                                     m_Player.pos.y -= m_Player.texture.getHeight() / 16;
                                 }
+                            }
+
+                            if(i.name.equals("coin"))
+                            {
+                                i.active = false;
+                                m_Score++;
                             }
                         }
 /*                        int checkX = (int)(m_Player.pos.x + ScreenOffset) / levelLoader.TileWidth;
@@ -489,6 +561,10 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     }
                     break;
             }
+
+            case SHUT_DOWN: {
+                break;
+            }
         }
     }
 
@@ -502,6 +578,11 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
             case INGAME:
                 RenderGameplay(canvas);
+                break;
+            case PAUSED:
+                RenderPause(canvas);
+                break;
+            case SHUT_DOWN:
                 break;
         }
     }
@@ -567,6 +648,14 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     // JUMP BUTTON
                     if (CheckCollision((int) btn_jump_pos.x, (int) btn_jump_pos.y, btn_jump_tex.getWidth(), btn_jump_tex.getHeight(), m_touchX, m_touchY, 0, 0))
                     {
+                        // Vibrate for 500 milliseconds
+                        if(v.hasVibrator())
+                        {
+                            v.vibrate(500);
+                        }
+
+                        m_Player.IsJumping = true;
+
                         if(m_Player.pos.y <= 269)
                         {
                             m_Player.IsOnGround = false;
@@ -576,10 +665,10 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                             m_Player.IsOnGround = true;
 
                             // Shan value
-                            //m_Player.vel.y = -350;
+                            m_Player.vel.y = -350;
 
                             // Dondon value
-                            m_Player.vel.y = -180;
+                            //m_Player.vel.y = -180;
                         }
                     }
                     // SLIDE BUTTON
@@ -592,8 +681,31 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     // PAUSE BUTTON
                     if (CheckCollision((int) btn_pause_pos.x, (int) btn_pause_pos.y, btn_pause_tex.getWidth(), btn_pause_tex.getHeight(), m_touchX, m_touchY, 0, 0)) {
                         m_Player.pos.x = 0;
-                        GameState = GAME_STATES.START_UP;
+                        GameState = GAME_STATES.PAUSED;
                     }
+
+
+                }
+                else if(GameState == GAME_STATES.PAUSED)
+                {
+                    // HOME BUTTON
+                    if (CheckCollision((int) btn_home_pos.x, (int) btn_home_pos.y, btn_home_tex.getWidth(), btn_home_tex.getHeight(), m_touchX, m_touchY, 0, 0))
+                    {
+                        GameObjectManager.CleanUp(true);
+                        GameState = GAME_STATES.SHUT_DOWN;
+                        m_Player.pos.x = 0;
+                        Context context = this.getContext();
+                        context.startActivity(new Intent(context, Mainmenu.class));
+                        break;
+                    }
+
+                    if (CheckCollision(
+                            (int) btn_resume_pos.x, (int) btn_resume_pos.y, btn_resume_tex.getWidth(), btn_resume_tex.getHeight(),
+                            m_touchX, m_touchY, 0, 0)) {
+                        GameState = GAME_STATES.INGAME;
+                    }
+
+
                 }
 
                 break;
@@ -606,7 +718,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     //m_Player.pos.y = (short) (m_touchY - shipArr[shipArrIdx].getHeight() / 2);
 
                     // Check Collision with coin
-                    if (CheckCollision(
+/*                    if (CheckCollision(
                             (int)m_Player.pos.x, (int)m_Player.pos.y, (int)m_Player.GetScale().x, (int)m_Player.GetScale().y,
                             coinX, coinY, anim_coin.getSpriteWidth(), anim_coin.getSpriteHeight()))
                     {
@@ -614,18 +726,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         Random randomNum = new Random();
                         coinX = randomNum.nextInt(ScreenWidth);
                         coinY = randomNum.nextInt(ScreenHeight);
-                    }
+                    }*/
 
-                }
-
-                LinkedList<GameObject> TestGoList = new LinkedList<>();
-                //TestGoList = GameObjectManager.getInstance().m_GoList;
-
-                for (GameObject i : GameObjectManager.getInstance().m_GoList) {
-                    if (!i.active && i.name.equals("rope"))
-                    {
-                        TestGoList.push(i);
-                }
                 }
 
                 for (GameObject i : GameObjectManager.getInstance().m_GoList) {
@@ -633,11 +735,13 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     if (!i.active)
                         continue;
 
+                    if(i.IsBitmap) {
                         if (CheckCollision(
                                 (int) i.pos.x, (int) i.pos.y, i.texture.getWidth(), i.texture.getHeight(),
                                 m_touchX, m_touchY, 0, 0)) {
                             if (i.name.equals("rope")) {
-                            i.active = false;
+                                i.active = false;
+                            }
                         }
                     }
                 }
@@ -697,12 +801,12 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     // Collision Check w/ GameObjects
     public boolean CheckCollision(GameObject go1, GameObject go2, float offset, float dt) {
 
-        int h1 = (int)(go1.GetScale().y);
+        int h1 = (int)(go1.GetScale().y + offset);
         int w1 = (int)(go1.GetScale().x + offset);
         int x1 = (int)((go1.pos.x + go1.vel.x * dt) - w1 / 2);
         int y1 = (int)((go1.pos.y + go1.vel.y * dt) - h1 / 2);
 
-        int h2 = (int)(go2.GetScale().y);
+        int h2 = (int)(go2.GetScale().y + offset);
         int w2 = (int)(go2.GetScale().x + offset);
         int x2 = (int)((go2.pos.x + go2.vel.x * dt) - w2 / 2);
         int y2 = (int)((go2.pos.y + go2.vel.y * dt) - h2 / 2);

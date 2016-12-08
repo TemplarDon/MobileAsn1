@@ -125,6 +125,15 @@ public class LevelLoader {
                             temp.name = "spike";
                             break;
 
+                        // Coins
+                        case 5:
+                            temp = GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().animationList.get("coin"), true);
+                            temp.vel.x = -moveRate;
+                            returnLvl.m_CollisionGrid[height][width] = 0;
+                            temp.KillPlayer = false;
+                            temp.name = "coin";
+                            break;
+
                         default:
                             break;
                     }
