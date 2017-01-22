@@ -116,7 +116,7 @@ public class LevelLoader {
                             ropePtr = temp;
                             break;
 
-                        // Spikes
+                        // Spikes (Upright)
                         case 4:
                             temp = GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().meshList.get("spike"), true);
                             temp.vel.x = -moveRate;
@@ -125,13 +125,13 @@ public class LevelLoader {
                             temp.name = "spike";
                             break;
 
-                        // Coins
+                        // Spikes (Sideways)
                         case 5:
-                            temp = GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().animationList.get("coin"), true);
+                            temp = GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().meshList.get("sidespike"), true);
                             temp.vel.x = -moveRate;
                             returnLvl.m_CollisionGrid[height][width] = 0;
-                            temp.KillPlayer = false;
-                            temp.name = "coin";
+                            temp.KillPlayer = true;
+                            temp.name = "sidespike";
                             break;
 
                         default:

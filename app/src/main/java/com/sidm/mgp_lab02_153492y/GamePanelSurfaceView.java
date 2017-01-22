@@ -1,18 +1,35 @@
 package com.sidm.mgp_lab02_153492y;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Camera;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Typeface;
+import android.media.MediaPlayer;
+import android.nfc.Tag;
+import android.os.Vibrator;
+import android.text.InputFilter;
+import android.text.InputType;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.Button;
-import android.os.Vibrator;
+import android.widget.EditText;
+import android.widget.Toast;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 
 import java.util.LinkedList;
 import java.util.Random;
@@ -21,7 +38,7 @@ import java.util.Random;
  * Created by 153492Y on 11/24/2016.
  */
 
-public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
+public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.Callback, SensorEventListener{
 
     // Implement this interface to receive information about changes to the surface.
     private GameThread myThread = null; // Thread to control the rendering
@@ -49,18 +66,29 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     float deltaTime;
     long dt;
 
+
     // Variable for Game State check
     private GAME_STATES GameState;
+
     private enum GAME_STATES
     {
         START_UP,
         INGAME,
         PAUSED,
-        SHUT_DOWN,
+        ENDGAME,
     }
 
     // Init SpriteAnimation
     private SpriteAnimation anim_coin;
+
+    // Define to use font as myfont - tutorial 8
+    Typeface myfont;
+
+    //  Init for start png - tutorial 8
+    private Bitmap star;
+    int numstar = 3;
+
+    int energy = 20;
 
     // Variables for coins
     private int coinX = 0, coinY = 0;
@@ -81,17 +109,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     private Bitmap btn_pause_tex;
     Vector3 btn_pause_pos;
 
-    private Button btn_home;
-    private Bitmap btn_home_tex;
-    Vector3 btn_home_pos;
-
     private Button btn_start;
     private Bitmap btn_start_tex;
     Vector3 btn_start_pos;
-
-    private Button btn_resume;
-    private Bitmap btn_resume_tex;
-    Vector3 btn_resume_pos;
 
     // Timer
     float f_timer;
@@ -105,7 +125,6 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
     // Player
     GameObject m_Player;
-    private SpriteAnimation anim_player;
 
     // Jump
     boolean jumping = false;
@@ -126,10 +145,45 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     Level CurrLevel;
     Level NextLevel;
 
-    Vibrator v;
+    // Tutorial 8
+    Activity activityTracker; //Use to track and then launch to the desired activity
+
+    // Tutorial 9
+    public Vibrator m_Vibrator;
+    SoundManager soundManager;
+
+    // Tutorial 13
+    // Toast
+    CharSequence text;
+    int toastTime;
+    Toast toast;
+
+    // Alert
+    public boolean showAlert = false;
+    AlertDialog.Builder alert = null;
+    private Alert AlertObject;
+
+    // Shared Preferences
+    SharedPreferences SharedPref_Name;
+    SharedPreferences.Editor editName;
+    String PlayerName;
+
+    SharedPreferences SharedPref_Score;
+    SharedPreferences.Editor editScore;
+    int PlayerScore;
+
+    // Tutorial 14
+    private SensorManager sensor;
+    float[] SensorVar = new float[3];
+    private float[] values = {0,0,0};
+
+    private Bitmap ball;
+    private float ballX = 0, ballY = 0;
+
+    private long lastTime = System.currentTimeMillis();
 
     //constructor for this GamePanelSurfaceView class
-    public GamePanelSurfaceView(Context context) {
+    public GamePanelSurfaceView(Context context, final Activity activity) {
 
         // Context is the current state of the application/object
         super(context);
@@ -160,6 +214,89 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         // Create the game loop thread
         myThread = new GameThread(getHolder(), this);
 
+        // Load star
+        star = BitmapFactory.decodeResource(getResources(), R.drawable.star);
+
+        // Load font type - tutorial 8
+        myfont = Typeface.createFromAsset(getContext().getAssets(),"fonts/Tandysoft.ttf");
+
+        // Tutorial 8 activity
+        // what is the condition ?? boolean = gameover
+        activityTracker = activity;
+        Intent intent = new Intent();
+        //intent.setClass(getContext(), Mainmenu.class);
+        //activityTracker.startActivity(intent);
+
+        // Tutorial 9
+        m_Vibrator = (Vibrator)getContext().getSystemService(Context.VIBRATOR_SERVICE);
+
+        soundManager = new SoundManager();
+        soundManager.Init();
+        soundManager.LoadSounds(context);
+
+        // Tutorial 13
+        // Init the Toast
+        ToastMessage(context);
+
+        // Shared Preferences
+        SharedPref_Name = getContext().getSharedPreferences("PlayerUSERID", Context.MODE_PRIVATE);
+        editName = SharedPref_Name.edit();
+        PlayerName = "PlayerDefaultName";
+        PlayerName = SharedPref_Name.getString("PlayerUSERID", "DEFAULT");
+
+        SharedPref_Score = getContext().getSharedPreferences("PlayerUSERSCORE", Context.MODE_PRIVATE);
+        editScore = SharedPref_Score.edit();
+        PlayerScore = 0;
+        PlayerScore = SharedPref_Score.getInt("PlayerUSERSCORE", 0);
+
+        // Create Alert Dialog
+        AlertObject = new Alert(this);
+        alert = new AlertDialog.Builder(getContext());
+
+        // Allow player to input name
+        final EditText input = new EditText(getContext());
+
+        // Define the input method where 'enter' key is disabled
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+
+        // Define max of 20 chars to be entered for name field
+        int maxLength = 20;
+        InputFilter[] FilterArray = new InputFilter[1];
+        FilterArray[0] = new InputFilter.LengthFilter(maxLength);
+        input.setFilters(FilterArray);
+
+        // Setup the alert dialog
+        alert.setTitle("Game Over");
+        alert.setMessage("Enter Name:");
+        alert.setCancelable(false);
+
+        alert.setIcon(R.drawable.star);
+        alert.setView(input);
+
+        alert.setPositiveButton("Ok",
+                new DialogInterface.OnClickListener()
+                {
+                    public void onClick(DialogInterface arg0, int arg1)
+                    {
+                        PlayerName = input.getText().toString();
+                        editName.putString("PlayerUSERID", PlayerName);
+                        editName.commit();
+
+                        GameState = GAME_STATES.START_UP;
+
+                        Intent intent = new Intent();
+                        intent.setClass(getContext(), Mainmenu.class);
+                        activityTracker.startActivity(intent);
+                    }
+                }
+        );
+
+        // Tutorial 14
+        sensor = (SensorManager)getContext().getSystemService(Context.SENSOR_SERVICE);
+        sensor.registerListener(this, sensor.getSensorList(Sensor.TYPE_ACCELEROMETER).get(0), SensorManager.SENSOR_DELAY_NORMAL);
+
+        ball = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ball), ScreenWidth / 6, ScreenHeight / 6, true);
+
         // Make the GamePanel focusable so it can handle events
         setFocusable(true);
 
@@ -176,12 +313,6 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         btn_start_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.begin_button), ScreenWidth / 3, ScreenHeight / 4, true);
         btn_start_pos = new Vector3(ScreenWidth / 3, ScreenHeight / 3, 0);
 
-        btn_resume_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.resume_button), ScreenWidth / 3, ScreenHeight / 4, true);
-        btn_resume_pos = new Vector3(ScreenWidth / 3, ScreenHeight / 6, 0);
-
-        btn_home_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.home_button), ScreenWidth / 3, ScreenHeight / 4, true);
-        btn_home_pos = new Vector3(ScreenWidth / 3,  ScreenHeight / 2, 0);
-
         // Timer
         f_timer = 0.f;
 
@@ -194,10 +325,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         GameObjectManager.getInstance().InitMeshlist(this.getContext(),ScreenWidth ,ScreenHeight);
 
         // GameObjects
-        anim_player = new SpriteAnimation(Bitmap.createScaledBitmap(
-                BitmapFactory.decodeResource(getResources(), R.drawable.player_spritesheet),
-                ScreenWidth / 8, ScreenHeight / 6, true), 320, 64, 5, 5);
-        m_Player = GameObjectManager.getInstance().CreateGameObject(new Vector3(ScreenWidth / 32, ScreenHeight / 2, 0), shipArr[0], true);
+        m_Player = GameObjectManager.getInstance().CreateGameObject(new Vector3(0, ScreenHeight / 2, 0), shipArr[0], true);
         m_Player.gravityApply = true;
         m_Player.vel = new Vector3(0,0,0);
         m_Player.name = "player";
@@ -218,9 +346,6 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
         // Gravity
         m_Gravity = new Vector3(0, 15f, 0);
-
-        // Vibration
-        v = (Vibrator) this.getContext().getSystemService(Context.VIBRATOR_SERVICE);
     }
 
     //must implement inherited abstract methods
@@ -230,6 +355,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
             myThread = new GameThread(getHolder(), this);
             myThread.startRun(true);
             myThread.start();
+            soundManager.StartBGM();
         }
     }
 
@@ -237,8 +363,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         // Destroy the thread
         if (myThread.isAlive()) {
             myThread.startRun(false);
-
-
+            StopVibrate();
+            soundManager.Exit();
         }
         boolean retry = true;
         while (retry) {
@@ -248,6 +374,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
             } catch (InterruptedException e) {
             }
         }
+
+        // Release the memory
+        sensor.unregisterListener(this);
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
@@ -284,16 +413,16 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         RenderGameObjects(canvas);
 
         // Print FPS
-        RenderTextOnScreen(canvas, "FPS: " + FPS, ScreenWidth / 16, ScreenHeight/ 15 , 30);
+        RenderTextOnScreen(canvas, "FPS: " + FPS, ScreenWidth / 7, ScreenHeight/ 15 , 30);
 
 
         // Print FPS
         //RenderTextOnScreen(canvas, "vel: " + m_Player.vel.VectorToStr(), 130, 125, 50);
 
         // Draw SpriteAnim
-        //anim_coin.draw(canvas);
-        //anim_coin.setX(coinX);
-        //anim_coin.setY(coinY);
+        anim_coin.draw(canvas);
+        anim_coin.setX(coinX);
+        anim_coin.setY(coinY);
 
         RenderButton(canvas, btn_jump_tex, btn_jump_pos);
         //RenderButton(canvas, btn_slide_tex, btn_slide_pos);
@@ -304,14 +433,15 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
         RenderTextOnScreen(canvas, "SCORE: " + Integer.toString(m_Score), ScreenWidth /2, ScreenHeight/ 15, 30);
 
-        //RenderTextOnScreen(canvas, "Time: " + timer, ScreenWidth/2, ScreenHeight / 3, 50);
+        RenderTextOnScreen(canvas, "Time: " + timer, ScreenWidth/2, ScreenHeight / 3, 50);
 
-    }
+        // tutorial 8
+        RenderStarAsLifes(canvas);
+        Renderpowerbar(canvas);
 
-    public void RenderPause(Canvas canvas)
-    {
-        RenderButton(canvas, btn_resume_tex, btn_resume_pos);
-        RenderButton(canvas, btn_home_tex, btn_home_pos);
+        // tutorial 14
+        //canvas.drawBitmap(ball, ballX, ballY, null);
+
     }
 
     private void RenderBackground(Canvas canvas)
@@ -325,16 +455,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         canvas.drawBitmap(btnToRender, pos.x, pos.y, null);
     }
 
-    private void RenderPlayer(Canvas canvas) {
-        if (m_Player.IsBitmap) {
-            canvas.drawBitmap(m_Player.texture, m_Player.pos.x, m_Player.pos.y, null);
-        }
-        else
-        {
-            m_Player.spriteAnimation.draw(canvas);
-            m_Player.spriteAnimation.setX((int)m_Player.pos.x);
-            m_Player.spriteAnimation.setY((int)m_Player.pos.y);
-        }
+    private void RenderPlayer(Canvas canvas)
+    {
+        canvas.drawBitmap(m_Player.texture, m_Player.pos.x, m_Player.pos.y, null);
     }
 
     private void RenderGameObjects(Canvas canvas)
@@ -373,7 +496,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                 shipArrIdx %= 4;
 
                 // Make SpriteAnim
-                //anim_coin.update(System.currentTimeMillis());
+                anim_coin.update(System.currentTimeMillis());
                 break;
             }
 
@@ -394,7 +517,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                 shipArrIdx %= 4;
 
                 // Make SpriteAnim
-                //anim_coin.update(System.currentTimeMillis());
+                anim_coin.update(System.currentTimeMillis());
 
                 // Update GameObjects
                 GameObjectManager.getInstance().CleanUp(false);
@@ -403,10 +526,6 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     if (!i.active)
                         continue;
 
-                    // Update sprites
-                    if (!i.IsBitmap) {
-                        i.spriteAnimation.update(System.currentTimeMillis());
-                    }
                     // Update Pallets
                     if (i.name == "pallet") {
                         if (!i.parentRope.active)
@@ -423,15 +542,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     }
 
                     // Any Object with x < 0, set active to false
-                    if (i.IsBitmap) {
-                        if (i.pos.x < -i.texture.getWidth() / 2)
-                            i.active = false;
-                    }
-                    else
-                    {
-                        if (i.pos.x < -i.spriteAnimation.getSpriteWidth() / 2)
-                            i.active = false;
-                    }
+                    if (i.pos.x < -i.texture.getWidth() / 2)
+                        i.active = false;
                 }
 
                 // Update Screen Values
@@ -448,7 +560,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                         Random rand = new Random();
 
-                        NextLevel = levelLoader.LoadLevel(rand.nextInt(2), false, ScreenMoveRate);
+                        NextLevel = levelLoader.LoadLevel(rand.nextInt(3), false, ScreenMoveRate);
                     }
 
                     // Update BG
@@ -477,11 +589,12 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                                 if (i2.name.equals("spike")) {
                                     if (CheckCollision(i, i2, 0, dt)) {
+                                        int checkX = (int) (i.pos.x);
                                         int checkY = (int) (i.pos.y + i.texture.getHeight() / 2);
 
                                         if (checkY < i2.pos.y) {
                                             if (i.IsFalling) {
-                                                i.vel.y =  -(m_Gravity.y);
+                                                i.vel.y = -9.8f;
                                                 i.pos.y -= i.texture.getHeight() / 16;
                                             }
                                         }
@@ -490,56 +603,38 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                             }
                         }
 
-                        int offset;
-                        if (m_Player.IsBitmap)
-                            offset = m_Player.texture.getWidth() / 8;
-                        else
-                            offset = m_Player.spriteAnimation.getSpriteWidth() / 8;
-
-                        if (CheckCollision(m_Player, i, offset, dt)) {
-                            if (i.KillPlayer)
-                            {
+                        if (CheckCollision(m_Player, i, m_Player.pos.x + m_Player.texture.getWidth() / 3, dt)) {
+                            if (i.KillPlayer) {
                                 // Kill player
+                                /*
                                 GameState = GAME_STATES.START_UP;
-                                m_Player.pos.x = ScreenWidth / 32;
+                                m_Player.pos.x = 0;
                                 m_Player.pos.y = (ScreenHeight / 2);
-                                m_Player.vel.y = 0;
                                 m_Score = 0;
                                 timer = 0;
+                                */
                                 GameObjectManager.getInstance().CleanUp(true);
-                                CurrLevel = levelLoader.LoadLevel(0, true, ScreenMoveRate);
-                                NextLevel = levelLoader.LoadLevel(1, false, ScreenMoveRate);
+                                //CurrLevel = levelLoader.LoadLevel(0, true, ScreenMoveRate);
+                                //NextLevel = levelLoader.LoadLevel(1, false, ScreenMoveRate);
+
+                                showAlert = true;
+                                GameState = GAME_STATES.ENDGAME;
                                 break;
                             }
 
-                            int checkX;
-                            int checkY;
-                            if (m_Player.IsBitmap)
-                            {
-                                checkX = (int) (m_Player.pos.x + m_Player.texture.getWidth() / 8);
-                                checkY = (int) (m_Player.pos.y + m_Player.texture.getHeight() / 3);
-                            }
-                            else {
-                                checkX = (int) (m_Player.pos.x + m_Player.spriteAnimation.getSpriteWidth() / 3);
-                                checkY = (int) (m_Player.pos.y + m_Player.spriteAnimation.getSpriteHeight() / 3);
-                            }
+                            int checkX = (int) (m_Player.pos.x + m_Player.texture.getWidth() / 8);
+                            int checkY = (int) (m_Player.pos.y + m_Player.texture.getHeight() / 2);
+
                             if (checkX < i.pos.x) {
                                 if (!i.name.equals("pallet"))
                                     MoveScreen = false;
                             }
 
-                            else if (checkY < i.pos.y) {
+                            if (checkY < i.pos.y) {
                                 if (m_Player.IsFalling) {
-                                    m_Player.vel.y = -(m_Gravity.y);
-                                    //m_Player.pos.y -= m_Player.spriteAnimation.getSpriteHeight();
+                                    m_Player.vel.y = -9.8f;
                                     m_Player.pos.y -= m_Player.texture.getHeight() / 16;
                                 }
-                            }
-
-                            if(i.name.equals("coin"))
-                            {
-                                i.active = false;
-                                m_Score++;
                             }
                         }
 /*                        int checkX = (int)(m_Player.pos.x + ScreenOffset) / levelLoader.TileWidth;
@@ -559,12 +654,21 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         }*/
                         }
                     }
+
+                //SensorMove();
                     break;
             }
 
-            case SHUT_DOWN: {
+            case ENDGAME:
+                if (showAlert) {
+                    AlertObject.RunAlert();
+                    showAlert = false;
+
+                    PlayerScore = m_Score;
+                    editScore.putInt("PlayerUSERSCORE", PlayerScore);
+                    editScore.commit();
+                }
                 break;
-            }
         }
     }
 
@@ -579,10 +683,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
             case INGAME:
                 RenderGameplay(canvas);
                 break;
-            case PAUSED:
-                RenderPause(canvas);
-                break;
-            case SHUT_DOWN:
+
+            case ENDGAME:
+                RenderBackground(canvas);
                 break;
         }
     }
@@ -597,9 +700,116 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         paint.setARGB(255, 255, 0, 0);
         paint.setStrokeWidth(100);
         paint.setTextSize(textsize);
+        paint.setTypeface(myfont); // tutorial 8
         canvas.drawText(text, posX, posY, paint);
     }
 
+    // Tutorial 8
+    private void RenderStarAsLifes(Canvas canvas)
+    {
+        if(numstar == 3)
+        {
+            canvas.drawBitmap(star, 28, ScreenHeight - 700, null);
+            canvas.drawBitmap(star, 78, ScreenHeight - 700, null);
+            canvas.drawBitmap(star, 128, ScreenHeight - 700, null);
+        }
+        else if(numstar == 2)
+        {
+            canvas.drawBitmap(star, 28, ScreenHeight - 700, null);
+            canvas.drawBitmap(star, 78, ScreenHeight - 700, null);
+        }
+        else if(numstar == 1)
+        {
+            canvas.drawBitmap(star, 28, ScreenHeight - 700, null);
+        }
+    }
+
+    // Tutorial 8
+    private void Renderpowerbar(Canvas canvas)
+    {
+        Paint paint = new Paint();
+
+        // Draw a rectangle box
+        paint.setColor(Color.RED);
+        paint.setStrokeWidth(10);
+        //paint.setStyle(Paint.Style.FILL_AND_STROKE);
+        paint.setStyle(Paint.Style.STROKE);
+        canvas.drawRect(ScreenWidth/ 20 + 5, ScreenHeight /20 - 5, 4 * ScreenWidth /20, 2 * ScreenHeight/ 25, paint);
+
+        // Fill the rectangle
+        paint.setColor(Color.YELLOW);
+        paint.setStyle(Paint.Style.FILL);
+        canvas.drawRect(ScreenWidth/ 20 + 8, ScreenHeight /20, ScreenWidth /20 + energy, 2 * ScreenHeight/ 25 - 5, paint);
+    }
+
+    // Tutorial 9
+    public void StartVibrate()
+    {
+        long pattern[] = {0,50,0};
+        if (m_Vibrator.hasVibrator()) {
+            m_Vibrator.vibrate(pattern, -1);
+        }
+        Log.v(VIEW_LOG_TAG, "test if vibration has occured");
+    }
+
+    public void StopVibrate()
+    {
+        if (m_Vibrator.hasVibrator()){
+            m_Vibrator.cancel();
+        }
+    }
+
+    // Tutorial 13
+    public void ToastMessage(Context context)
+    {
+        text = "SOMEBODY ONCE TOLD ME";
+        toastTime = Toast.LENGTH_SHORT;
+        toast = Toast.makeText(context, text, toastTime);
+    }
+
+    // Tutorial 14
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        values = event.values;
+    }
+
+    public void SensorMove()
+    {
+        float testX, testY;
+
+        testX = ballX + (values[1] * ((System.currentTimeMillis() - lastTime) / 1000));
+        testY = ballX + (values[0] * ((System.currentTimeMillis() - lastTime) / 1000));
+
+        // Ball is going out of the screen in X-Axis
+        if (testX <= ball.getWidth() / 2 || testX >= ScreenMoveRate - ball.getWidth() / 2) {
+            // Ball is on screen in Y-Axis
+            if (testY > /*shipArr[shipArrIdx]*/ball.getHeight()/2 && testY < ScreenHeight - ball.getHeight() / 2)
+            {
+                ballY = testY;
+            }
+        }
+        // Ball is of screen in Y-Axis
+        else if (testY <= ball.getHeight() / 2 || testY >= ScreenHeight - ball.getHeight() / 2)
+        {
+            ballY = testY;
+        }
+        // Ball is on screen in X-Axis
+        else if (testX > ball.getWidth() / 2 && testX < ScreenWidth - ball.getWidth() / 2)
+        {
+            ballX = testX;
+        }
+        // Both axis of ball are in screen
+        else
+        {
+            ballX = testX;
+            ballY = testY;
+        }
+    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -648,14 +858,6 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     // JUMP BUTTON
                     if (CheckCollision((int) btn_jump_pos.x, (int) btn_jump_pos.y, btn_jump_tex.getWidth(), btn_jump_tex.getHeight(), m_touchX, m_touchY, 0, 0))
                     {
-                        // Vibrate for 500 milliseconds
-                        if(v.hasVibrator())
-                        {
-                            v.vibrate(500);
-                        }
-
-                        m_Player.IsJumping = true;
-
                         if(m_Player.pos.y <= 269)
                         {
                             m_Player.IsOnGround = false;
@@ -665,11 +867,17 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                             m_Player.IsOnGround = true;
 
                             // Shan value
-                            m_Player.vel.y = -350;
+                            //m_Player.vel.y = -350;
 
                             // Dondon value
                             //m_Player.vel.y = -180;
+
+                            // Ratio
+                            m_Player.vel.y = (float)(-ScreenHeight / 2.8);
                         }
+                        StartVibrate();
+                        toast.show();
+                        soundManager.PlaySound("Jump");
                     }
                     // SLIDE BUTTON
                     if (CheckCollision((int) btn_slide_pos.x, (int) btn_slide_pos.y, btn_slide_tex.getWidth(), btn_slide_tex.getHeight(), m_touchX, m_touchY, 0, 0))
@@ -681,31 +889,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     // PAUSE BUTTON
                     if (CheckCollision((int) btn_pause_pos.x, (int) btn_pause_pos.y, btn_pause_tex.getWidth(), btn_pause_tex.getHeight(), m_touchX, m_touchY, 0, 0)) {
                         m_Player.pos.x = 0;
-                        GameState = GAME_STATES.PAUSED;
+                        GameState = GAME_STATES.START_UP;
                     }
-
-
-                }
-                else if(GameState == GAME_STATES.PAUSED)
-                {
-                    // HOME BUTTON
-                    if (CheckCollision((int) btn_home_pos.x, (int) btn_home_pos.y, btn_home_tex.getWidth(), btn_home_tex.getHeight(), m_touchX, m_touchY, 0, 0))
-                    {
-                        GameObjectManager.CleanUp(true);
-                        GameState = GAME_STATES.SHUT_DOWN;
-                        m_Player.pos.x = 0;
-                        Context context = this.getContext();
-                        context.startActivity(new Intent(context, Mainmenu.class));
-                        break;
-                    }
-
-                    if (CheckCollision(
-                            (int) btn_resume_pos.x, (int) btn_resume_pos.y, btn_resume_tex.getWidth(), btn_resume_tex.getHeight(),
-                            m_touchX, m_touchY, 0, 0)) {
-                        GameState = GAME_STATES.INGAME;
-                    }
-
-
                 }
 
                 break;
@@ -718,7 +903,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     //m_Player.pos.y = (short) (m_touchY - shipArr[shipArrIdx].getHeight() / 2);
 
                     // Check Collision with coin
-/*                    if (CheckCollision(
+                    if (CheckCollision(
                             (int)m_Player.pos.x, (int)m_Player.pos.y, (int)m_Player.GetScale().x, (int)m_Player.GetScale().y,
                             coinX, coinY, anim_coin.getSpriteWidth(), anim_coin.getSpriteHeight()))
                     {
@@ -726,8 +911,18 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         Random randomNum = new Random();
                         coinX = randomNum.nextInt(ScreenWidth);
                         coinY = randomNum.nextInt(ScreenHeight);
-                    }*/
+                    }
 
+                }
+
+                LinkedList<GameObject> TestGoList = new LinkedList<>();
+                //TestGoList = GameObjectManager.getInstance().m_GoList;
+
+                for (GameObject i : GameObjectManager.getInstance().m_GoList) {
+                    if (!i.active && i.name.equals("rope"))
+                    {
+                        TestGoList.push(i);
+                }
                 }
 
                 for (GameObject i : GameObjectManager.getInstance().m_GoList) {
@@ -735,13 +930,11 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     if (!i.active)
                         continue;
 
-                    if(i.IsBitmap) {
                         if (CheckCollision(
                                 (int) i.pos.x, (int) i.pos.y, i.texture.getWidth(), i.texture.getHeight(),
                                 m_touchX, m_touchY, 0, 0)) {
                             if (i.name.equals("rope")) {
-                                i.active = false;
-                            }
+                            i.active = false;
                         }
                     }
                 }
@@ -801,12 +994,12 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     // Collision Check w/ GameObjects
     public boolean CheckCollision(GameObject go1, GameObject go2, float offset, float dt) {
 
-        int h1 = (int)(go1.GetScale().y + offset);
+        int h1 = (int)(go1.GetScale().y);
         int w1 = (int)(go1.GetScale().x + offset);
         int x1 = (int)((go1.pos.x + go1.vel.x * dt) - w1 / 2);
         int y1 = (int)((go1.pos.y + go1.vel.y * dt) - h1 / 2);
 
-        int h2 = (int)(go2.GetScale().y + offset);
+        int h2 = (int)(go2.GetScale().y);
         int w2 = (int)(go2.GetScale().x + offset);
         int x2 = (int)((go2.pos.x + go2.vel.x * dt) - w2 / 2);
         int y2 = (int)((go2.pos.y + go2.vel.y * dt) - h2 / 2);

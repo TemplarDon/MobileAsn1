@@ -18,7 +18,7 @@ public class Gamepage extends Activity {
 
         requestWindowFeature(Window.FEATURE_NO_TITLE); // Hides title
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN); // Hide top bar
-        setContentView(new GamePanelSurfaceView(this));
+        setContentView(new GamePanelSurfaceView(this, this));
     }
 
     @Override
