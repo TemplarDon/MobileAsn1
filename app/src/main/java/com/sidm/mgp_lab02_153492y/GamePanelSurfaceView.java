@@ -282,6 +282,10 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         editName.putString("PlayerUSERID", PlayerName);
                         editName.commit();
 
+                        PlayerScore = m_Score;
+                        editScore.putInt("PlayerUSERSCORE", PlayerScore);
+                        editScore.commit();
+
                         GameState = GAME_STATES.START_UP;
 
                         Intent intent = new Intent();
@@ -325,7 +329,11 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         GameObjectManager.getInstance().InitMeshlist(this.getContext(),ScreenWidth ,ScreenHeight);
 
         // GameObjects
-        m_Player = GameObjectManager.getInstance().CreateGameObject(new Vector3(0, ScreenHeight / 2, 0), shipArr[0], true);
+        //m_Player = GameObjectManager.getInstance().CreateGameObject(new Vector3(0, ScreenHeight / 2, 0), shipArr[0], true);
+        SpriteAnimation temp = new SpriteAnimation(Bitmap.createScaledBitmap(
+                BitmapFactory.decodeResource(getResources(), R.drawable.player_spritesheet),
+                ScreenWidth / 8, ScreenHeight / 6, true), 320, 64, 10, 5);
+        m_Player = GameObjectManager.getInstance().CreateGameObject(new Vector3(10, ScreenHeight / 2, 0), temp, true);
         m_Player.gravityApply = true;
         m_Player.vel = new Vector3(0,0,0);
         m_Player.name = "player";
@@ -335,7 +343,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         levelLoader.Init(ScreenWidth, ScreenHeight);
 
         // Screen Move Rate
-        ScreenMoveRate = 180;
+        ScreenMoveRate = (int)(ScreenWidth * 0.2);
         BGMoveRate = 100;
         ScreenOffset = 0;
         MoveScreen = true;
@@ -431,7 +439,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         // Debug State
         //RenderTextOnScreen(canvas, "IN-GAME", ScreenWidth /2, ScreenHeight /2, 50);
 
-        RenderTextOnScreen(canvas, "SCORE: " + Integer.toString(m_Score), ScreenWidth /2, ScreenHeight/ 15, 30);
+        RenderTextOnScreen(canvas, "SCORE: " + Integer.toString(m_Score), (int)(ScreenWidth * 0.7), (int)(ScreenHeight * 0.1), (int)(ScreenHeight * 0.05));
 
         RenderTextOnScreen(canvas, "Time: " + timer, ScreenWidth/2, ScreenHeight / 3, 50);
 
@@ -455,9 +463,17 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         canvas.drawBitmap(btnToRender, pos.x, pos.y, null);
     }
 
-    private void RenderPlayer(Canvas canvas)
-    {
-        canvas.drawBitmap(m_Player.texture, m_Player.pos.x, m_Player.pos.y, null);
+    private void RenderPlayer(Canvas canvas) {
+        if (m_Player.IsBitmap)
+        {
+            canvas.drawBitmap(m_Player.texture, m_Player.pos.x, m_Player.pos.y, null);
+        }
+        else
+        {
+            m_Player.spriteAnimation.draw(canvas);
+            m_Player.spriteAnimation.setX((int)m_Player.pos.x);
+            m_Player.spriteAnimation.setY((int)m_Player.pos.y);
+        }
     }
 
     private void RenderGameObjects(Canvas canvas)
@@ -494,9 +510,6 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                 // Update ship.
                 shipArrIdx++;
                 shipArrIdx %= 4;
-
-                // Make SpriteAnim
-                anim_coin.update(System.currentTimeMillis());
                 break;
             }
 
@@ -518,6 +531,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                 // Make SpriteAnim
                 anim_coin.update(System.currentTimeMillis());
+
+                m_Player.spriteAnimation.update(System.currentTimeMillis());
 
                 // Update GameObjects
                 GameObjectManager.getInstance().CleanUp(false);
@@ -542,7 +557,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     }
 
                     // Any Object with x < 0, set active to false
-                    if (i.pos.x < -i.texture.getWidth() / 2)
+                    if (i.IsBitmap && i.pos.x < -i.texture.getWidth() / 2)
+                        i.active = false;
+                    else if (!i.IsBitmap && i.pos.x < -i.spriteAnimation.getSpriteWidth() / 2)
                         i.active = false;
                 }
 
@@ -560,7 +577,10 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                         Random rand = new Random();
 
-                        NextLevel = levelLoader.LoadLevel(rand.nextInt(3), false, ScreenMoveRate);
+                        NextLevel = levelLoader.LoadLevel(rand.nextInt(4), false, ScreenMoveRate);
+
+                        m_Score++;
+                        toast.show();
                     }
 
                     // Update BG
@@ -603,7 +623,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                             }
                         }
 
-                        if (CheckCollision(m_Player, i, m_Player.pos.x + m_Player.texture.getWidth() / 3, dt)) {
+                        if (CheckCollision(m_Player, i, m_Player.pos.x + m_Player.spriteAnimation.getSpriteWidth() / 3, dt)) {
                             if (i.KillPlayer) {
                                 // Kill player
                                 /*
@@ -622,8 +642,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                                 break;
                             }
 
-                            int checkX = (int) (m_Player.pos.x + m_Player.texture.getWidth() / 8);
-                            int checkY = (int) (m_Player.pos.y + m_Player.texture.getHeight() / 2);
+                            int checkX = (int) (m_Player.pos.x + m_Player.spriteAnimation.getSpriteWidth() / 8);
+                            int checkY = (int) (m_Player.pos.y + m_Player.spriteAnimation.getSpriteHeight() / 2);
 
                             if (checkX < i.pos.x) {
                                 if (!i.name.equals("pallet"))
@@ -633,7 +653,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                             if (checkY < i.pos.y) {
                                 if (m_Player.IsFalling) {
                                     m_Player.vel.y = -9.8f;
-                                    m_Player.pos.y -= m_Player.texture.getHeight() / 16;
+                                    m_Player.pos.y -= m_Player.spriteAnimation.getSpriteHeight() / 8;
+                                    m_Player.CanJump = true;
                                 }
                             }
                         }
@@ -663,10 +684,6 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                 if (showAlert) {
                     AlertObject.RunAlert();
                     showAlert = false;
-
-                    PlayerScore = m_Score;
-                    editScore.putInt("PlayerUSERSCORE", PlayerScore);
-                    editScore.commit();
                 }
                 break;
         }
@@ -762,7 +779,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     // Tutorial 13
     public void ToastMessage(Context context)
     {
-        text = "SOMEBODY ONCE TOLD ME";
+        text = "Stage Done!";
         toastTime = Toast.LENGTH_SHORT;
         toast = Toast.makeText(context, text, toastTime);
     }
@@ -856,14 +873,10 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
 
                     // JUMP BUTTON
-                    if (CheckCollision((int) btn_jump_pos.x, (int) btn_jump_pos.y, btn_jump_tex.getWidth(), btn_jump_tex.getHeight(), m_touchX, m_touchY, 0, 0))
-                    {
-                        if(m_Player.pos.y <= 269)
-                        {
+                    if (CheckCollision((int) btn_jump_pos.x, (int) btn_jump_pos.y, btn_jump_tex.getWidth(), btn_jump_tex.getHeight(), m_touchX, m_touchY, 0, 0)) {
+                        if (m_Player.pos.y <= 269) {
                             m_Player.IsOnGround = false;
-                        }
-                        else
-                        {
+                        } else {
                             m_Player.IsOnGround = true;
 
                             // Shan value
@@ -873,11 +886,16 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                             //m_Player.vel.y = -180;
 
                             // Ratio
-                            m_Player.vel.y = (float)(-ScreenHeight / 2.8);
+                            //m_Player.vel.y = (float)(-ScreenHeight / 2.8);
                         }
-                        StartVibrate();
-                        toast.show();
-                        soundManager.PlaySound("Jump");
+
+                        if (m_Player.CanJump) {
+                            // Ratio
+                            m_Player.vel.y = (float) (-ScreenHeight / 2.8);
+                            m_Player.CanJump = false;
+                            StartVibrate();
+                            soundManager.PlaySound("Jump");
+                        }
                     }
                     // SLIDE BUTTON
                     if (CheckCollision((int) btn_slide_pos.x, (int) btn_slide_pos.y, btn_slide_tex.getWidth(), btn_slide_tex.getHeight(), m_touchX, m_touchY, 0, 0))
@@ -930,12 +948,13 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     if (!i.active)
                         continue;
 
+                    if (!i.name.equals("rope"))
+                        continue;
+
                         if (CheckCollision(
                                 (int) i.pos.x, (int) i.pos.y, i.texture.getWidth(), i.texture.getHeight(),
                                 m_touchX, m_touchY, 0, 0)) {
-                            if (i.name.equals("rope")) {
                             i.active = false;
-                        }
                     }
                 }
                 break;

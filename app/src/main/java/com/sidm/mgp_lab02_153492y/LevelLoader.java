@@ -49,6 +49,10 @@ public class LevelLoader {
             case 2:
                 inputStream = m_Context.getResources().openRawResource(R.raw.lvl2);
                 break;
+
+            case 3:
+                inputStream = m_Context.getResources().openRawResource(R.raw.lvl3);
+                break;
         }
 
         BufferedReader bufferedReader= new BufferedReader(new InputStreamReader(inputStream));

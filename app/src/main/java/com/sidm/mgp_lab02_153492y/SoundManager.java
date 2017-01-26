@@ -15,7 +15,7 @@ public class SoundManager {
 
     private SoundPool Sounds;
     private AudioAttributes audioAttributes;
-    private int SoundBGM, SoundJump, SoundHit;
+    private int SoundJump, SoundDie;
 
     public void Init()
     {
@@ -34,7 +34,7 @@ public class SoundManager {
     {
         BGM = MediaPlayer.create(context, R.raw.music);
 
-        //SoundJump = Sounds.load(context, R.raw.jump, 1);
+        SoundJump = Sounds.load(context, R.raw.jump, 1);
     }
 
     public void PlaySound(String ID)

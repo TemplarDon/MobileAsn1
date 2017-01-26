@@ -43,8 +43,8 @@ public class HighScore extends Activity implements View.OnClickListener {
         SharedPref_Name = getSharedPreferences("PlayerUSERID", Context.MODE_PRIVATE);
         PlayerName = SharedPref_Name.getString("PlayerUSERID", "DEFAULT");
 
-        SharedPref_Score = getSharedPreferences("PlayerSCORE", Context.MODE_PRIVATE);
-        PlayerScore = SharedPref_Score.getInt("PlayerSCORE", 0);
+        SharedPref_Score = getSharedPreferences("PlayerUSERSCORE", Context.MODE_PRIVATE);
+        PlayerScore = SharedPref_Score.getInt("PlayerUSERSCORE", 0);
 
         scoreText.setText(String.format(PlayerName + " " + PlayerScore));
 

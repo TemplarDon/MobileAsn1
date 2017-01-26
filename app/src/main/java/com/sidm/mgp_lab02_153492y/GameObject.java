@@ -23,6 +23,7 @@ public class GameObject {
     public Boolean IsJumping = false;
     public Boolean IsFalling = true;
     public Boolean IsOnGround = true;
+    public Boolean CanJump = true;
 
     // Spike Specific
     public Boolean KillPlayer = false;
