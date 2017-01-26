@@ -311,7 +311,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         btn_slide_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.slide_button), ScreenWidth / 6, ScreenHeight / 6, true);
         btn_slide_pos = new Vector3(0, 5 * ScreenHeight / 8, 0);
 
-        btn_pause_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pause_button), ScreenWidth / 10, ScreenHeight / 10, true);
+        btn_pause_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.pause_button), ScreenWidth / 11, ScreenHeight / 8, true);
         btn_pause_pos = new Vector3(8 * ScreenWidth / 9, 18, 0);
 
         btn_start_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.begin_button), ScreenWidth / 3, ScreenHeight / 4, true);
@@ -332,8 +332,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         //m_Player = GameObjectManager.getInstance().CreateGameObject(new Vector3(0, ScreenHeight / 2, 0), shipArr[0], true);
         SpriteAnimation temp = new SpriteAnimation(Bitmap.createScaledBitmap(
                 BitmapFactory.decodeResource(getResources(), R.drawable.player_spritesheet),
-                ScreenWidth / 8, ScreenHeight / 6, true), 320, 64, 10, 5);
-        m_Player = GameObjectManager.getInstance().CreateGameObject(new Vector3(10, ScreenHeight / 2, 0), temp, true);
+                ScreenWidth / 8, ScreenHeight / 6, true), 320, 64, 5, 5);
+        m_Player = GameObjectManager.getInstance().CreateGameObject(new Vector3(ScreenWidth * 0.05f, ScreenHeight / 2, 0), temp, true);
         m_Player.gravityApply = true;
         m_Player.vel = new Vector3(0,0,0);
         m_Player.name = "player";
@@ -353,7 +353,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         NextLevel = levelLoader.LoadLevel(1, false, ScreenMoveRate);
 
         // Gravity
-        m_Gravity = new Vector3(0, 15f, 0);
+        m_Gravity = new Vector3(0, 18f, 0);
     }
 
     //must implement inherited abstract methods
@@ -421,16 +421,12 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         RenderGameObjects(canvas);
 
         // Print FPS
-        RenderTextOnScreen(canvas, "FPS: " + FPS, ScreenWidth / 7, ScreenHeight/ 15 , 30);
-
-
-        // Print FPS
         //RenderTextOnScreen(canvas, "vel: " + m_Player.vel.VectorToStr(), 130, 125, 50);
 
         // Draw SpriteAnim
-        anim_coin.draw(canvas);
-        anim_coin.setX(coinX);
-        anim_coin.setY(coinY);
+        //anim_coin.draw(canvas);
+        //anim_coin.setX(coinX);
+        //anim_coin.setY(coinY);
 
         RenderButton(canvas, btn_jump_tex, btn_jump_pos);
         //RenderButton(canvas, btn_slide_tex, btn_slide_pos);
@@ -441,11 +437,14 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
         RenderTextOnScreen(canvas, "SCORE: " + Integer.toString(m_Score), (int)(ScreenWidth * 0.7), (int)(ScreenHeight * 0.1), (int)(ScreenHeight * 0.05));
 
-        RenderTextOnScreen(canvas, "Time: " + timer, ScreenWidth/2, ScreenHeight / 3, 50);
+        // Print FPS
+        RenderTextOnScreen(canvas, "FPS: " + FPS, ScreenWidth / 30, ScreenHeight/ 15 , 25);
+
+        RenderTextOnScreen(canvas, "Time: " + timer, ScreenWidth/2, ScreenHeight / 15, 25);
 
         // tutorial 8
-        RenderStarAsLifes(canvas);
-        Renderpowerbar(canvas);
+        //RenderStarAsLifes(canvas);
+        //Renderpowerbar(canvas);
 
         // tutorial 14
         //canvas.drawBitmap(ball, ballX, ballY, null);
@@ -510,6 +509,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                 // Update ship.
                 shipArrIdx++;
                 shipArrIdx %= 4;
+
+                // Make SpriteAnim
+                //anim_coin.update(System.currentTimeMillis());
                 break;
             }
 
@@ -530,7 +532,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                 shipArrIdx %= 4;
 
                 // Make SpriteAnim
-                anim_coin.update(System.currentTimeMillis());
+                //anim_coin.update(System.currentTimeMillis());
 
                 m_Player.spriteAnimation.update(System.currentTimeMillis());
 
@@ -614,8 +616,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                                         if (checkY < i2.pos.y) {
                                             if (i.IsFalling) {
-                                                i.vel.y = -9.8f;
-                                                i.pos.y -= i.texture.getHeight() / 16;
+                                                i.vel.y = -m_Gravity.y;
+                                                i.pos.y -= i.texture.getHeight() / 12;
                                             }
                                         }
                                     }
@@ -623,7 +625,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                             }
                         }
 
-                        if (CheckCollision(m_Player, i, m_Player.pos.x + m_Player.spriteAnimation.getSpriteWidth() / 3, dt)) {
+                        // OFFSET SHOULD CHANGE, ITS WEIRD RN
+                        if (CheckCollision(m_Player, i, /*m_Player.pos.x + m_Player.spriteAnimation.getSpriteWidth() / 2*/m_Player.spriteAnimation.getSpriteWidth() / 3, dt)) {
                             if (i.KillPlayer) {
                                 // Kill player
                                 /*
@@ -637,6 +640,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                                 //CurrLevel = levelLoader.LoadLevel(0, true, ScreenMoveRate);
                                 //NextLevel = levelLoader.LoadLevel(1, false, ScreenMoveRate);
 
+                                soundManager.StopBGM();
+                                soundManager.PlaySound("Die");
                                 showAlert = true;
                                 GameState = GAME_STATES.ENDGAME;
                                 break;
@@ -652,9 +657,11 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                             if (checkY < i.pos.y) {
                                 if (m_Player.IsFalling) {
-                                    m_Player.vel.y = -9.8f;
-                                    m_Player.pos.y -= m_Player.spriteAnimation.getSpriteHeight() / 8;
+                                    m_Player.vel.y = -m_Gravity.y;
+                                    m_Player.pos.y -= m_Player.spriteAnimation.getSpriteHeight() / 12;
                                     m_Player.CanJump = true;
+
+                                    Log.v("Debug", i.name);
                                 }
                             }
                         }

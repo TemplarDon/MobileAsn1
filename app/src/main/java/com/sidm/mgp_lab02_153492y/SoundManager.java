@@ -26,7 +26,7 @@ public class SoundManager {
 
         Sounds = new SoundPool.Builder()
                 .setAudioAttributes(audioAttributes)
-                .setMaxStreams(2) // Number of SFXs
+                .setMaxStreams(3) // Number of SFXs
                 .build();
     }
 
@@ -35,6 +35,8 @@ public class SoundManager {
         BGM = MediaPlayer.create(context, R.raw.music);
 
         SoundJump = Sounds.load(context, R.raw.jump, 1);
+
+        SoundDie = Sounds.load(context, R.raw.defeat, 1);
     }
 
     public void PlaySound(String ID)
@@ -44,6 +46,11 @@ public class SoundManager {
             case "Jump":
             {
                 Sounds.play(SoundJump, 1.0f, 1.0f, 0, 0, 1.5f);
+                break;
+            }
+            case "Die":
+            {
+                Sounds.play(SoundDie, 1.0f, 1.0f, 0, 0, 1.5f);
                 break;
             }
         }
@@ -73,6 +80,7 @@ public class SoundManager {
     {
         StopBGM();
         Sounds.unload(SoundJump);
+        Sounds.unload(SoundDie);
         Sounds.release();
     }
 }
