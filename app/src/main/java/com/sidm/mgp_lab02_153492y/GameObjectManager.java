@@ -29,6 +29,7 @@ public class GameObjectManager {
         meshList.put("rope", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.rope), ScreenWidth / 16, ScreenHeight / 4, true));
         meshList.put("spike", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.spike), ScreenWidth / 16, ScreenHeight / 12, true));
         meshList.put("sidespike", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.sidespike), ScreenWidth / 16, ScreenHeight / 12, true));
+        meshList.put("platform", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.platform), ScreenWidth / 16, ScreenHeight / 12, true));
     }
 
     public static void CleanUp(boolean DeleteAll)

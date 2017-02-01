@@ -353,7 +353,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         NextLevel = levelLoader.LoadLevel(1, false, ScreenMoveRate);
 
         // Gravity
-        m_Gravity = new Vector3(0, 18f, 0);
+        m_Gravity = new Vector3(0, 20f, 0);
     }
 
     //must implement inherited abstract methods
@@ -554,8 +554,17 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         i.Update(dt, m_Gravity);
 
                     // Update all objects except player
-                    if (MoveScreen && !i.equals(m_Player)) {
+                    if (MoveScreen && !i.equals(m_Player))
+                    {
                         i.Update(dt, m_Gravity);
+                    }
+                    else if (!MoveScreen&& !i.equals(m_Player))
+                    {
+                        if (i.name.equals("pallet") || i.name.equals("platform"))
+                        {
+                            // Function that only handles special effects
+                            i.UpdateEffect(dt, m_Gravity);
+                        }
                     }
 
                     // Any Object with x < 0, set active to false
@@ -579,7 +588,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                         Random rand = new Random();
 
-                        NextLevel = levelLoader.LoadLevel(rand.nextInt(4), false, ScreenMoveRate);
+                        NextLevel = levelLoader.LoadLevel(rand.nextInt(5), false, ScreenMoveRate);
 
                         m_Score++;
                         toast.show();
@@ -651,7 +660,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                             int checkY = (int) (m_Player.pos.y + m_Player.spriteAnimation.getSpriteHeight() / 2);
 
                             if (checkX < i.pos.x) {
-                                if (!i.name.equals("pallet"))
+                                if (!i.name.equals("pallet") || !i.name.equals("platform"))
                                     MoveScreen = false;
                             }
 
@@ -660,8 +669,6 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                                     m_Player.vel.y = -m_Gravity.y;
                                     m_Player.pos.y -= m_Player.spriteAnimation.getSpriteHeight() / 12;
                                     m_Player.CanJump = true;
-
-                                    Log.v("Debug", i.name);
                                 }
                             }
                         }
@@ -898,12 +905,13 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                         if (m_Player.CanJump) {
                             // Ratio
-                            m_Player.vel.y = (float) (-ScreenHeight / 2.8);
+                            m_Player.vel.y = (float) (-ScreenHeight / 2.5);
                             m_Player.CanJump = false;
                             StartVibrate();
                             soundManager.PlaySound("Jump");
                         }
                     }
+
                     // SLIDE BUTTON
                     if (CheckCollision((int) btn_slide_pos.x, (int) btn_slide_pos.y, btn_slide_tex.getWidth(), btn_slide_tex.getHeight(), m_touchX, m_touchY, 0, 0))
                     {
@@ -916,6 +924,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         m_Player.pos.x = 0;
                         GameState = GAME_STATES.START_UP;
                     }
+
                 }
 
                 break;
@@ -940,28 +949,63 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                 }
 
-                LinkedList<GameObject> TestGoList = new LinkedList<>();
-                //TestGoList = GameObjectManager.getInstance().m_GoList;
+                for (GameObject i : GameObjectManager.getInstance().m_GoList)
+                {
 
-                for (GameObject i : GameObjectManager.getInstance().m_GoList) {
-                    if (!i.active && i.name.equals("rope"))
+                    if (!i.active)
+                        continue;
+
+                    if (i.name.equals("rope")) {
+                        if (CheckCollision(
+                                (int) i.pos.x, (int) i.pos.y, i.texture.getWidth(), i.texture.getHeight(),
+                                m_touchX, m_touchY, 0, 0)) {
+                            i.active = false;
+                        }
+                    }
+
+                    if (i.name.equals("platform"))
                     {
-                        TestGoList.push(i);
+                        if (CheckCollision(
+                                (int) i.pos.x, (int) i.pos.y, i.texture.getWidth(), i.texture.getHeight(),
+                                m_touchX, m_touchY, 0, 0)) {
+                            i.IsTouched = true;
+                        }
+                    }
                 }
-                }
+                break;
 
+            case MotionEvent.ACTION_UP:
+                // Check if any platform object has been touched
                 for (GameObject i : GameObjectManager.getInstance().m_GoList) {
 
                     if (!i.active)
                         continue;
 
-                    if (!i.name.equals("rope"))
+                    if (!i.name.equals("platform"))
                         continue;
 
-                        if (CheckCollision(
-                                (int) i.pos.x, (int) i.pos.y, i.texture.getWidth(), i.texture.getHeight(),
-                                m_touchX, m_touchY, 0, 0)) {
-                            i.active = false;
+                    if (i.IsTouched)
+                    {
+                        // Check if release point is above the start pos and within a range on the x-axis
+                        if (m_touchY < i.pos.y && (m_touchX < i.pos.x + ScreenWidth / 4 && m_touchX > i.pos.x - ScreenWidth / 4))
+                        {
+                            GameObject temp = i;
+                            while (temp.LeftObject != null)
+                            {
+                                temp.LeftObject.IsMoving = true;
+                                temp = temp.LeftObject;
+                            }
+
+                            temp = i;
+                            while (temp.RightObject != null)
+                            {
+                                temp.RightObject.IsMoving = true;
+                                temp = temp.RightObject;
+                            }
+
+                            i.IsMoving = true;
+                        }
+                        i.IsTouched = false;
                     }
                 }
                 break;

@@ -9,7 +9,6 @@ import android.graphics.Bitmap;
 public class GameObject {
 
     void GameObject() {
-
     }
 
     public String name = "object";
@@ -24,12 +23,20 @@ public class GameObject {
     public Boolean IsFalling = true;
     public Boolean IsOnGround = true;
     public Boolean CanJump = true;
+    public Boolean ShouldMove = true;
 
     // Spike Specific
     public Boolean KillPlayer = false;
 
     // Rope
     GameObject parentRope;
+
+    // Platform
+    public int MaxIncrease = 2; // How many tiles it can be raised
+    public Vector3 startPos = new Vector3(0,0,0);
+    public Boolean IsTouched = false; // If touched during MotionEvent.ACTION_DOWN
+    public Boolean IsMoving = false; // If true, move till maxincrease
+    public GameObject LeftObject, RightObject;
 
     // Object either has sprite animation or normal texture
     public Bitmap texture;
@@ -67,6 +74,17 @@ public class GameObject {
         pos.x += vel.x * dt;
         pos.y += vel.y * dt;
 
+        // Platform specific movement
+        if (IsMoving)
+        {
+            pos.y -= grav.y * 4 * dt;
+
+            if (pos.y < startPos.y - (MaxIncrease * texture.getHeight()))
+            {
+                IsMoving = false;
+            }
+        }
+
         // Get Jumping/Falling boolean
         if (pos.y > prevPos.y) {
             IsFalling = true;
@@ -86,10 +104,36 @@ public class GameObject {
 
     }
 
+    public void UpdateEffect(float dt, Vector3 grav) {
+
+        // Set Prev pos
+        Vector3 prevPos = new Vector3(pos.x ,pos.y, pos.z);
+
+        // Update vel based on grav
+        if (gravityApply) {
+            vel.y += grav.y;
+        }
+
+        // Update Pos based on vel
+        pos.y += vel.y * dt;
+
+        // Platform specific movement
+        if (IsMoving)
+        {
+            pos.y -= grav.y * 4 * dt;
+
+            if (pos.y < startPos.y - (MaxIncrease * texture.getHeight()))
+            {
+                IsMoving = false;
+            }
+        }
+
+    }
+
     public void Jump(float dt){
 
-            vel.y = vel.y + (float)(15f) * dt;
-            pos.y = pos.y + vel.y * dt;
+            //vel.y = vel.y + (float)(15f) * dt;
+            //pos.y = pos.y + vel.y * dt;
     }
 
 /*    // Overloaded for player
