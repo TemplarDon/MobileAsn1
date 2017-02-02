@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.hardware.camera2.params.Face;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
@@ -18,6 +19,7 @@ import android.widget.TextView;
 public class HighScore extends Activity implements View.OnClickListener {
 
     private Button btn_back;
+    private Button btn_share;
 
     SharedPreferences SharedPref_Name;
     SharedPreferences SharedPref_Score;
@@ -32,6 +34,9 @@ public class HighScore extends Activity implements View.OnClickListener {
 
         btn_back = (Button)findViewById(R.id.btn_back);
         btn_back.setOnClickListener(this);
+
+        btn_share = (Button)findViewById(R.id.btn_share);
+        btn_share.setOnClickListener(this);
 
         // Score
         TextView scoreText;
@@ -56,6 +61,10 @@ public class HighScore extends Activity implements View.OnClickListener {
 
         if (v == btn_back) {
             intent.setClass(this, Mainmenu.class);
+        }
+        else if (v == btn_share)
+        {
+            intent.setClass(this, FacebookLogin.class);
         }
 
         // Start activity based on intent

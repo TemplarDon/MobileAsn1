@@ -39,6 +39,7 @@ public class FacebookLogin extends Activity implements View.OnClickListener {
 
     // Week 14
     private Button btn_fblogin;
+    private Button btn_back;
 
     boolean loggedin = false;
     private CallbackManager callbackManager;
@@ -63,6 +64,9 @@ public class FacebookLogin extends Activity implements View.OnClickListener {
 
         btn_fblogin = (LoginButton)findViewById(R.id.fb_login_button);
         btn_fblogin.setOnClickListener(this);
+
+        btn_back = (Button)findViewById(R.id.btn_back);
+        btn_back.setOnClickListener(this);
 
         profile_pic = (ProfilePictureView)findViewById(R.id.picture);
         callbackManager = CallbackManager.Factory.create();
@@ -132,6 +136,10 @@ public class FacebookLogin extends Activity implements View.OnClickListener {
     @Override
     public void onClick(View v) {
         Intent intent = new Intent();
+
+        if (v == btn_back) {
+            intent.setClass(this, Mainmenu.class);
+        }
 
         // Start activity based on intent
         startActivity(intent);
