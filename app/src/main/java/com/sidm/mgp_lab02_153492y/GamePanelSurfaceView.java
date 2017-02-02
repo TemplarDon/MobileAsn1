@@ -828,10 +828,10 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         // Fill the rectangle
         paint.setColor(Color.YELLOW);
         paint.setStyle(Paint.Style.FILL);
-        canvas.drawRect(spawnPos.x - radius, spawnPos.y + verticalScale, spawnPos.x - radius + (timer * 10f), spawnPos.y - verticalScale, paint);
+        canvas.drawRect(spawnPos.x - radius, spawnPos.y + verticalScale, spawnPos.x - radius + (timer * 15f), spawnPos.y - verticalScale, paint);
 
         // Check if timer reached end
-        if ((spawnPos.x - radius + (timer * 10f)) > (spawnPos.x + radius))
+        if ((spawnPos.x - radius + (timer * 15f)) > (spawnPos.x + radius))
         {
             timer = 0;
             ScreenMoveRate *= 1.1f;
@@ -1149,12 +1149,6 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         i.IsTouched = false;
                     }
                 }
-                break;
-
-            case MotionEvent.ACTION_UP:
-
-                // Check if touchX and touchY collide with tapping box
-
                 break;
         }
 

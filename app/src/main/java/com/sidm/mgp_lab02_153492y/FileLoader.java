@@ -52,7 +52,7 @@ public class FileLoader{
                 StringBuffer buf = new StringBuffer();
                 while ((str = reader.readLine()) != null)
                 {
-                    buf.append(str + ",");
+                    buf.append(str  + " ");
                 }
                 in.close();
                 return buf.toString();
