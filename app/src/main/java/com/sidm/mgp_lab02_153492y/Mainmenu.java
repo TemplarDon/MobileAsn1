@@ -60,8 +60,8 @@ public class Mainmenu extends Activity implements OnClickListener {
         }
         else if (v == btn_help)
         {
-            intent.setClass(this, HelpPage.class);
-            //intent.setClass(this, FacebookLogin.class);
+            //intent.setClass(this, HelpPage.class);
+            intent.setClass(this, FacebookLogin.class);
         }
 
         // Start activity based on intent

@@ -80,7 +80,7 @@
             android:label="MGP_Lab02_153492Y"/>
 
         <meta-data android:name="com.facebook.sdk.ApplicationId"
-            android:value="944827045647516"/>
+            android:value="@string/AppID"/>
 
         <provider
             android:authorities="com.facebook.app.FacebookContentProvider944827045647516"

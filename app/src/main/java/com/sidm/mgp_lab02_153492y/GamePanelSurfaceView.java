@@ -420,6 +420,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         // Render Objects
         RenderGameObjects(canvas);
 
+        RenderTimeBar(canvas);
+
         // Print FPS
         //RenderTextOnScreen(canvas, "vel: " + m_Player.vel.VectorToStr(), 130, 125, 50);
 
@@ -735,6 +737,35 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         canvas.drawText(text, posX, posY, paint);
     }
 
+    // Render timer bar
+    private void RenderTimeBar(Canvas canvas)
+    {
+        Paint paint = new Paint();
+
+        // drawRect(left, top, right, bottom)
+        Vector3 spawnPos = new Vector3(ScreenWidth * 0.5f, ScreenHeight * 0.2f, 0);
+        float radius = ScreenWidth / 8;
+
+        // Draw a rectangle box
+        paint.setColor(Color.RED);
+        paint.setStrokeWidth(50);
+        paint.setStyle(Paint.Style.STROKE);
+        canvas.drawRect(spawnPos.x - radius, spawnPos.y + 25, spawnPos.x + radius, spawnPos.y - 25, paint);
+
+        // Fill the rectangle
+        paint.setColor(Color.YELLOW);
+        paint.setStyle(Paint.Style.FILL);
+        canvas.drawRect(spawnPos.x - radius, spawnPos.y + 25, spawnPos.x - radius + (timer * 10f), spawnPos.y - 25, paint);
+
+        // Check if timer reached end
+        if ((spawnPos.x - radius + (timer * 10f)) > (spawnPos.x + radius))
+        {
+            timer = 0;
+            ScreenMoveRate *= 1.1f;
+        }
+    }
+
+
     // Tutorial 8
     private void RenderStarAsLifes(Canvas canvas)
     {
@@ -905,7 +936,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                         if (m_Player.CanJump) {
                             // Ratio
-                            m_Player.vel.y = (float) (-ScreenHeight / 2.5);
+                            m_Player.vel.y = (float) (-ScreenHeight / 2.1);
                             m_Player.CanJump = false;
                             StartVibrate();
                             soundManager.PlaySound("Jump");
@@ -921,7 +952,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                     // PAUSE BUTTON
                     if (CheckCollision((int) btn_pause_pos.x, (int) btn_pause_pos.y, btn_pause_tex.getWidth(), btn_pause_tex.getHeight(), m_touchX, m_touchY, 0, 0)) {
-                        m_Player.pos.x = 0;
+                        m_Player.pos.x = ScreenWidth * 0.05f;
                         GameState = GAME_STATES.START_UP;
                     }
 

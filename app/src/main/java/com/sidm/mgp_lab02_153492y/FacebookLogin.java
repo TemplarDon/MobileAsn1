@@ -55,11 +55,11 @@ public class FacebookLogin extends Activity implements View.OnClickListener {
 
         requestWindowFeature(Window.FEATURE_NO_TITLE); // Hides title
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN); // Hide top bar
-        setContentView(R.layout.facebooklogin);
+        setContentView(R.layout.facebook);
 
         // Week 14
         FacebookSdk.sdkInitialize(this.getApplicationContext());
-        setContentView(R.layout.facebooklogin);
+        setContentView(R.layout.facebook);
 
         btn_fblogin = (LoginButton)findViewById(R.id.fb_login_button);
         btn_fblogin.setOnClickListener(this);

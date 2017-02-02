@@ -43,6 +43,8 @@ public class GameObject {
     public SpriteAnimation spriteAnimation;
     public Boolean IsBitmap;
 
+    private float MAX_FALL_SPEED = 500.f;
+
     public Vector3 GetScale()
     {
         Vector3 returnVec;
@@ -68,6 +70,9 @@ public class GameObject {
         if (gravityApply) {
             vel.x += grav.x;
             vel.y += grav.y;
+
+            if (vel.y > MAX_FALL_SPEED)
+                vel.y = MAX_FALL_SPEED;
         }
 
         // Update Pos based on vel
