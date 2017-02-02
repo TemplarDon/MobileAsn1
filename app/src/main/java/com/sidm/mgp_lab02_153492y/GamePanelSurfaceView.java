@@ -31,6 +31,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -74,9 +76,12 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     {
         START_UP,
         INGAME,
-        PAUSED,
+        PAUSE,
         ENDGAME,
     }
+
+    FileOutputStream outputStream;
+
 
     // Init SpriteAnimation
     private SpriteAnimation anim_coin;
@@ -112,6 +117,18 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     private Button btn_start;
     private Bitmap btn_start_tex;
     Vector3 btn_start_pos;
+
+    private Button btn_resume;
+    private Bitmap btn_resume_tex;
+    Vector3 btn_resume_pos;
+
+    private Button btn_option;
+    private Bitmap btn_option_tex;
+    Vector3 btn_option_pos;
+
+    private Button btn_quit;
+    private Bitmap btn_quit_tex;
+    Vector3 btn_quit_pos;
 
     // Timer
     float f_timer;
@@ -288,6 +305,11 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                         GameState = GAME_STATES.START_UP;
 
+                        FileLoader fileloader = new FileLoader();
+                        String writeData;
+                        writeData = PlayerName + Integer.toString(PlayerScore) + " ";
+                        fileloader.writeToFile(writeData, getContext());
+
                         Intent intent = new Intent();
                         intent.setClass(getContext(), Mainmenu.class);
                         activityTracker.startActivity(intent);
@@ -316,6 +338,14 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
         btn_start_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.begin_button), ScreenWidth / 3, ScreenHeight / 4, true);
         btn_start_pos = new Vector3(ScreenWidth / 3, ScreenHeight / 3, 0);
+
+        btn_resume_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.resume_button), ScreenWidth / 6, ScreenHeight / 6, true);
+        btn_resume_pos = new Vector3(ScreenWidth * 0.5f - btn_resume_tex.getWidth() / 2, ScreenHeight * 0.3f, 0);
+
+
+       btn_quit_tex = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.quit_button), ScreenWidth / 6, ScreenHeight / 6, true);
+       btn_quit_pos = new Vector3(ScreenWidth * 0.5f - btn_resume_tex.getWidth() / 2,  ScreenHeight * 0.5f, 0);
+
 
         // Timer
         f_timer = 0.f;
@@ -451,6 +481,22 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
     }
 
+    public void RenderPause(Canvas canvas)
+    {
+        if (canvas == null)
+        {
+            return;
+        }
+
+        RenderBackground(canvas);
+        // Resume
+        RenderButton(canvas, btn_resume_tex, btn_resume_pos);
+
+        // Home
+        RenderButton(canvas, btn_quit_tex, btn_quit_pos);
+
+    }
+
     private void RenderBackground(Canvas canvas)
     {
         canvas.drawBitmap(ScaledBackground, bgX, bgY, null); // 1st BG
@@ -503,8 +549,10 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     public void update(float dt, float fps) {
         FPS = fps;
 
-        switch (GameState) {
-            case START_UP: {
+        switch (GameState)
+        {
+            case START_UP:
+            {
 
                 // Update ship.
                 shipArrIdx++;
@@ -516,7 +564,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
             }
 
 
-            case INGAME: {
+            case INGAME:
+            {
 
                 timer += dt;
 
@@ -687,12 +736,21 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     break;
             }
 
+            case PAUSE:
+            {
+                break;
+            }
+
             case ENDGAME:
-                if (showAlert) {
+            {
+
+                if (showAlert)
+                {
                     AlertObject.RunAlert();
                     showAlert = false;
                 }
                 break;
+            }
         }
     }
 
@@ -706,6 +764,10 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
             case INGAME:
                 RenderGameplay(canvas);
+                break;
+
+            case PAUSE:
+                RenderPause(canvas);
                 break;
 
             case ENDGAME:
@@ -836,7 +898,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
+    public boolean onTouchEvent(MotionEvent event)
+    {
 
         /*
         // 5) In event of touch on screen, the spaceship will relocate to the point of touch
@@ -912,9 +975,32 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     }
 
                     // PAUSE BUTTON
-                    if (CheckCollision((int) btn_pause_pos.x, (int) btn_pause_pos.y, btn_pause_tex.getWidth(), btn_pause_tex.getHeight(), m_touchX, m_touchY, 0, 0)) {
+                    if (CheckCollision((int) btn_pause_pos.x, (int) btn_pause_pos.y, btn_pause_tex.getWidth(), btn_pause_tex.getHeight(), m_touchX, m_touchY, 0, 0))
+                    {
                         m_Player.pos.x = 0;
+                        GameState = GAME_STATES.PAUSE;
+                    }
+                }
+                else if (GameState == GAME_STATES.PAUSE)
+                {
+                    if (CheckCollision((int) btn_resume_pos.x, (int) btn_resume_pos.y, btn_resume_tex.getWidth(), btn_resume_tex.getHeight(), m_touchX, m_touchY, 0, 0))
+                    {
+                        GameState = GAME_STATES.INGAME;
+                    }
+
+                    /*if (CheckCollision((int) btn_option_pos.x, (int) btn_option_pos.y, btn_option_tex.getWidth(), btn_option_tex.getHeight(), m_touchX, m_touchY, 0, 0))
+                    {
                         GameState = GAME_STATES.START_UP;
+                        Intent intent = new Intent();
+                        //intent.setClass(getContext(), option.class);
+                        activityTracker.startActivity(intent);
+                    }*/
+
+                    if (CheckCollision((int) btn_quit_pos.x, (int) btn_quit_pos.y, btn_quit_tex.getWidth(), btn_quit_tex.getHeight(), m_touchX, m_touchY, 0, 0))
+                    {
+                        soundManager.StopBGM();
+                        showAlert = true;
+                        GameState = GAME_STATES.ENDGAME;
                     }
                 }
 
@@ -964,6 +1050,12 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                             i.active = false;
                     }
                 }
+                break;
+
+            case MotionEvent.ACTION_UP:
+
+                // Check if touchX and touchY collide with tapping box
+
                 break;
         }
 

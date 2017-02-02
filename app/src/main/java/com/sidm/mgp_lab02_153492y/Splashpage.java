@@ -7,6 +7,8 @@ import android.view.MotionEvent;
 import android.view.Window;
 import android.view.WindowManager;
 
+import java.io.File;
+
 /**
  * Created by 153492Y on 11/17/2016.
  */
@@ -19,6 +21,8 @@ public class Splashpage extends Activity{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        File file = new File(this.getFilesDir(), "highscore");
 
         requestWindowFeature(Window.FEATURE_NO_TITLE); // Hides title
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN); // Hide top bar
