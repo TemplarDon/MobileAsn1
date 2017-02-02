@@ -53,6 +53,10 @@ public class LevelLoader {
             case 3:
                 inputStream = m_Context.getResources().openRawResource(R.raw.lvl3);
                 break;
+
+            case 4:
+                inputStream = m_Context.getResources().openRawResource(R.raw.lvl4);
+                break;
         }
 
         BufferedReader bufferedReader= new BufferedReader(new InputStreamReader(inputStream));
@@ -79,6 +83,9 @@ public class LevelLoader {
 
             // Temp Rope GameObject
             GameObject ropePtr = new GameObject();
+
+            // Temp Platform GameObject
+            GameObject lastPtr = null;
 
             while((line = bufferedReader.readLine()) != null)
             {
@@ -136,6 +143,23 @@ public class LevelLoader {
                             returnLvl.m_CollisionGrid[height][width] = 0;
                             temp.KillPlayer = true;
                             temp.name = "sidespike";
+                            break;
+
+                        // Raise Blocks
+                        case 7:
+                            temp = GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().meshList.get("platform"), true);
+                            temp.vel.x = -moveRate;
+                            returnLvl.m_CollisionGrid[height][width] = 1;
+                            temp.KillPlayer = false;
+                            temp.name = "platform";
+                            temp.startPos.Set(pos.x, pos.y, pos.z);
+
+                            temp.LeftObject = lastPtr;
+
+                            if (lastPtr != null)
+                                lastPtr.RightObject = temp;
+
+                            lastPtr = temp;
                             break;
 
                         default:

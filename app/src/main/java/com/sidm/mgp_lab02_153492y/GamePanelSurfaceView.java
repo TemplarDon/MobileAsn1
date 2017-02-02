@@ -162,6 +162,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     Level CurrLevel;
     Level NextLevel;
 
+    // ScoreGain rate
+    int ScoreMultiplier;
+
     // Tutorial 8
     Activity activityTracker; //Use to track and then launch to the desired activity
 
@@ -174,6 +177,10 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
     CharSequence text;
     int toastTime;
     Toast toast;
+
+    CharSequence TimerToastText;
+    int TimerToastTime;
+    Toast TimerToast;
 
     // Alert
     public boolean showAlert = false;
@@ -254,6 +261,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         // Tutorial 13
         // Init the Toast
         ToastMessage(context);
+        TimerToastMessage(context);
 
         // Shared Preferences
         SharedPref_Name = getContext().getSharedPreferences("PlayerUSERID", Context.MODE_PRIVATE);
@@ -383,7 +391,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         NextLevel = levelLoader.LoadLevel(1, false, ScreenMoveRate);
 
         // Gravity
-        m_Gravity = new Vector3(0, 18f, 0);
+        m_Gravity = new Vector3(0, 20f, 0);
+
+        ScoreMultiplier = 1;
     }
 
     //must implement inherited abstract methods
@@ -450,6 +460,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         // Render Objects
         RenderGameObjects(canvas);
 
+        RenderTimeBar(canvas);
+
         // Print FPS
         //RenderTextOnScreen(canvas, "vel: " + m_Player.vel.VectorToStr(), 130, 125, 50);
 
@@ -465,12 +477,12 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         // Debug State
         //RenderTextOnScreen(canvas, "IN-GAME", ScreenWidth /2, ScreenHeight /2, 50);
 
-        RenderTextOnScreen(canvas, "SCORE: " + Integer.toString(m_Score), (int)(ScreenWidth * 0.7), (int)(ScreenHeight * 0.1), (int)(ScreenHeight * 0.05));
+        RenderTextOnScreen(canvas, "SCORE: " + Integer.toString(m_Score), (int)(ScreenWidth * 0.7), (int)(ScreenHeight / 15), (int)(ScreenHeight * 0.05));
 
         // Print FPS
-        RenderTextOnScreen(canvas, "FPS: " + FPS, ScreenWidth / 30, ScreenHeight/ 15 , 25);
+        RenderTextOnScreen(canvas, "FPS: " + FPS, ScreenWidth / 30, ScreenHeight / 15 , 25);
 
-        RenderTextOnScreen(canvas, "Time: " + timer, ScreenWidth/2, ScreenHeight / 15, 25);
+        //RenderTextOnScreen(canvas, "Time: " + timer, ScreenWidth/2, ScreenHeight / 15, 25);
 
         // tutorial 8
         //RenderStarAsLifes(canvas);
@@ -603,8 +615,17 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         i.Update(dt, m_Gravity);
 
                     // Update all objects except player
-                    if (MoveScreen && !i.equals(m_Player)) {
+                    if (MoveScreen && !i.equals(m_Player))
+                    {
                         i.Update(dt, m_Gravity);
+                    }
+                    else if (!MoveScreen&& !i.equals(m_Player))
+                    {
+                        if (i.name.equals("pallet") || i.name.equals("platform"))
+                        {
+                            // Function that only handles special effects
+                            i.UpdateEffect(dt, m_Gravity);
+                        }
                     }
 
                     // Any Object with x < 0, set active to false
@@ -628,9 +649,9 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                         Random rand = new Random();
 
-                        NextLevel = levelLoader.LoadLevel(rand.nextInt(4), false, ScreenMoveRate);
+                        NextLevel = levelLoader.LoadLevel(rand.nextInt(5), false, ScreenMoveRate);
 
-                        m_Score++;
+                        m_Score += 1 * ScoreMultiplier;
                         toast.show();
                     }
 
@@ -700,7 +721,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                             int checkY = (int) (m_Player.pos.y + m_Player.spriteAnimation.getSpriteHeight() / 2);
 
                             if (checkX < i.pos.x) {
-                                if (!i.name.equals("pallet"))
+                                if (!i.name.equals("pallet") || !i.name.equals("platform"))
                                     MoveScreen = false;
                             }
 
@@ -709,8 +730,6 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                                     m_Player.vel.y = -m_Gravity.y;
                                     m_Player.pos.y -= m_Player.spriteAnimation.getSpriteHeight() / 12;
                                     m_Player.CanJump = true;
-
-                                    Log.v("Debug", i.name);
                                 }
                             }
                         }
@@ -790,6 +809,42 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         canvas.drawText(text, posX, posY, paint);
     }
 
+    // Render timer bar
+    private void RenderTimeBar(Canvas canvas)
+    {
+        Paint paint = new Paint();
+
+        // drawRect(left, top, right, bottom)
+        Vector3 spawnPos = new Vector3(ScreenWidth * 0.5f, ScreenHeight * 0.2f, 0);
+        float radius = ScreenWidth / 8;
+        float verticalScale = ScreenHeight / 20;
+
+        // Draw a rectangle box
+        paint.setColor(Color.RED);
+        paint.setStrokeWidth(10);
+        paint.setStyle(Paint.Style.STROKE);
+        canvas.drawRect(spawnPos.x - radius, spawnPos.y + verticalScale, spawnPos.x + radius, spawnPos.y - verticalScale, paint);
+
+        // Fill the rectangle
+        paint.setColor(Color.YELLOW);
+        paint.setStyle(Paint.Style.FILL);
+        canvas.drawRect(spawnPos.x - radius, spawnPos.y + verticalScale, spawnPos.x - radius + (timer * 10f), spawnPos.y - verticalScale, paint);
+
+        // Check if timer reached end
+        if ((spawnPos.x - radius + (timer * 10f)) > (spawnPos.x + radius))
+        {
+            timer = 0;
+            ScreenMoveRate *= 1.1f;
+            ScoreMultiplier++;
+
+            TimerToast.show();
+        }
+
+        // Render Multiplier text
+        RenderTextOnScreen(canvas, "X" + Integer.toString(ScoreMultiplier), (int)(spawnPos.x + radius + 15), (int)spawnPos.y, (int)(ScreenHeight * 0.05));
+    }
+
+
     // Tutorial 8
     private void RenderStarAsLifes(Canvas canvas)
     {
@@ -851,6 +906,13 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
         text = "Stage Done!";
         toastTime = Toast.LENGTH_SHORT;
         toast = Toast.makeText(context, text, toastTime);
+    }
+
+    public void TimerToastMessage(Context context)
+    {
+        TimerToastText = "Score Multiplier Increased! Speed Increased!";
+        TimerToastTime = Toast.LENGTH_LONG;
+        TimerToast = Toast.makeText(context, TimerToastText, TimerToastTime);
     }
 
     // Tutorial 14
@@ -961,12 +1023,13 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                         if (m_Player.CanJump) {
                             // Ratio
-                            m_Player.vel.y = (float) (-ScreenHeight / 2.8);
+                            m_Player.vel.y = (float) (-ScreenHeight / 2.1);
                             m_Player.CanJump = false;
                             StartVibrate();
                             soundManager.PlaySound("Jump");
                         }
                     }
+
                     // SLIDE BUTTON
                     if (CheckCollision((int) btn_slide_pos.x, (int) btn_slide_pos.y, btn_slide_tex.getWidth(), btn_slide_tex.getHeight(), m_touchX, m_touchY, 0, 0))
                     {
@@ -977,7 +1040,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     // PAUSE BUTTON
                     if (CheckCollision((int) btn_pause_pos.x, (int) btn_pause_pos.y, btn_pause_tex.getWidth(), btn_pause_tex.getHeight(), m_touchX, m_touchY, 0, 0))
                     {
-                        m_Player.pos.x = 0;
+                        m_Player.pos.x = ScreenWidth * 0.05f;
                         GameState = GAME_STATES.PAUSE;
                     }
                 }
@@ -1002,6 +1065,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         showAlert = true;
                         GameState = GAME_STATES.ENDGAME;
                     }
+
                 }
 
                 break;
@@ -1026,28 +1090,63 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                 }
 
-                LinkedList<GameObject> TestGoList = new LinkedList<>();
-                //TestGoList = GameObjectManager.getInstance().m_GoList;
+                for (GameObject i : GameObjectManager.getInstance().m_GoList)
+                {
 
-                for (GameObject i : GameObjectManager.getInstance().m_GoList) {
-                    if (!i.active && i.name.equals("rope"))
+                    if (!i.active)
+                        continue;
+
+                    if (i.name.equals("rope")) {
+                        if (CheckCollision(
+                                (int) i.pos.x, (int) i.pos.y, i.texture.getWidth(), i.texture.getHeight(),
+                                m_touchX, m_touchY, 0, 0)) {
+                            i.active = false;
+                        }
+                    }
+
+                    if (i.name.equals("platform"))
                     {
-                        TestGoList.push(i);
+                        if (CheckCollision(
+                                (int) i.pos.x, (int) i.pos.y, i.texture.getWidth(), i.texture.getHeight(),
+                                m_touchX, m_touchY, 0, 0)) {
+                            i.IsTouched = true;
+                        }
+                    }
                 }
-                }
+                break;
 
+            case MotionEvent.ACTION_UP:
+                // Check if any platform object has been touched
                 for (GameObject i : GameObjectManager.getInstance().m_GoList) {
 
                     if (!i.active)
                         continue;
 
-                    if (!i.name.equals("rope"))
+                    if (!i.name.equals("platform"))
                         continue;
 
-                        if (CheckCollision(
-                                (int) i.pos.x, (int) i.pos.y, i.texture.getWidth(), i.texture.getHeight(),
-                                m_touchX, m_touchY, 0, 0)) {
-                            i.active = false;
+                    if (i.IsTouched)
+                    {
+                        // Check if release point is above the start pos and within a range on the x-axis
+                        if (m_touchY < i.pos.y && (m_touchX < i.pos.x + ScreenWidth / 4 && m_touchX > i.pos.x - ScreenWidth / 4))
+                        {
+                            GameObject temp = i;
+                            while (temp.LeftObject != null)
+                            {
+                                temp.LeftObject.IsMoving = true;
+                                temp = temp.LeftObject;
+                            }
+
+                            temp = i;
+                            while (temp.RightObject != null)
+                            {
+                                temp.RightObject.IsMoving = true;
+                                temp = temp.RightObject;
+                            }
+
+                            i.IsMoving = true;
+                        }
+                        i.IsTouched = false;
                     }
                 }
                 break;
