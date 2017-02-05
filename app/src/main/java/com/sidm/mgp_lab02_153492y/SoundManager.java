@@ -15,7 +15,7 @@ public class SoundManager {
 
     private SoundPool Sounds;
     private AudioAttributes audioAttributes;
-    private int SoundJump, SoundDie;
+    private int SoundJump, SoundDie, SoundSlice, SoundRock, SoundFloat;
 
     public void Init()
     {
@@ -37,6 +37,12 @@ public class SoundManager {
         SoundJump = Sounds.load(context, R.raw.jump, 1);
 
         SoundDie = Sounds.load(context, R.raw.defeat, 1);
+
+        SoundSlice = Sounds.load(context, R.raw.slice, 1);
+
+        SoundRock = Sounds.load(context, R.raw.stone, 1);
+
+        SoundFloat = Sounds.load(context, R.raw.floating, 1);
     }
 
     public void PlaySound(String ID)
@@ -51,6 +57,24 @@ public class SoundManager {
             case "Die":
             {
                 Sounds.play(SoundDie, 1.0f, 1.0f, 0, 0, 1.5f);
+                break;
+            }
+
+            case "Slice":
+            {
+                Sounds.play(SoundSlice, 1.0f, 1.0f, 0, 0, 1.5f);
+                break;
+            }
+
+            case "Rock":
+            {
+                Sounds.play(SoundRock, 1.0f, 1.0f, 0, 0, 1.5f);
+                break;
+            }
+
+            case "Float":
+            {
+                Sounds.play(SoundFloat, 1.0f, 1.0f, 0, 0, 1.5f);
                 break;
             }
         }

@@ -403,7 +403,10 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
             myThread = new GameThread(getHolder(), this);
             myThread.startRun(true);
             myThread.start();
-            soundManager.StartBGM();
+
+
+
+            //soundManager.StartBGM();
         }
     }
 
@@ -1105,6 +1108,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                         if (CheckCollision(
                                 (int) i.pos.x, (int) i.pos.y, i.texture.getWidth(), i.texture.getHeight(),
                                 m_touchX, m_touchY, 0, 0)) {
+                            soundManager.PlaySound("Slice");
                             i.active = false;
                         }
                     }
@@ -1131,6 +1135,8 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     {
                         if (i.IsTouched)
                         {
+                            soundManager.PlaySound("Float");
+
                             // Check if release point is above the start pos and within a range on the x-axis
                             if (m_touchY < i.pos.y && (m_touchX < i.pos.x + ScreenWidth / 4 && m_touchX > i.pos.x - ScreenWidth / 4))
                             {
@@ -1164,6 +1170,7 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
 
                             if(i.rock_health <= 0)
                             {
+                                soundManager.PlaySound("Rock");
                                 i.active = false;
                             }
                         }
