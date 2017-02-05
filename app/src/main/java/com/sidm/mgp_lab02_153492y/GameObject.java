@@ -45,6 +45,8 @@ public class GameObject {
 
     private float MAX_FALL_SPEED = 500.f;
 
+    public int rock_health = 3;
+
     public Vector3 GetScale()
     {
         Vector3 returnVec;

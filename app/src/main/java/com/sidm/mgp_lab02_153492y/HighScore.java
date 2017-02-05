@@ -76,7 +76,17 @@ public class HighScore extends Activity implements View.OnClickListener {
         FileLoader fileloader = new FileLoader();
 
         Data = fileloader.readFromFile(this);
-        scoreText.setText(String.format(Data));
+
+        String parts[] = Data.split(" ");
+
+        String finalResult = "";
+        for (int i = 0; i < parts.length; ++i)
+        {
+            finalResult += parts[i];
+            finalResult += System.getProperty("line.separator");
+        }
+
+        scoreText.setText((finalResult));
 
 
     }

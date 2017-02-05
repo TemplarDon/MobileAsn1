@@ -554,6 +554,11 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                 i.spriteAnimation.setX((int)i.pos.x);
                 i.spriteAnimation.setY((int)i.pos.y);
             }
+
+            if(i.name.equals("rock"))
+            {
+                RenderTextOnScreen(canvas, Integer.toString(i.rock_health), (int)i.pos.x + i.texture.getWidth() / 2, (int)i.pos.y - i.texture.getHeight() / 4, (int)(ScreenHeight * 0.05));
+            }
         }
     }
 
@@ -1122,32 +1127,50 @@ public class GamePanelSurfaceView extends SurfaceView implements SurfaceHolder.C
                     if (!i.active)
                         continue;
 
-                    if (!i.name.equals("platform"))
-                        continue;
-
-                    if (i.IsTouched)
+                    if (i.name.equals("platform"))
                     {
-                        // Check if release point is above the start pos and within a range on the x-axis
-                        if (m_touchY < i.pos.y && (m_touchX < i.pos.x + ScreenWidth / 4 && m_touchX > i.pos.x - ScreenWidth / 4))
+                        if (i.IsTouched)
                         {
-                            GameObject temp = i;
-                            while (temp.LeftObject != null)
+                            // Check if release point is above the start pos and within a range on the x-axis
+                            if (m_touchY < i.pos.y && (m_touchX < i.pos.x + ScreenWidth / 4 && m_touchX > i.pos.x - ScreenWidth / 4))
                             {
-                                temp.LeftObject.IsMoving = true;
-                                temp = temp.LeftObject;
-                            }
+                                GameObject temp = i;
+                                while (temp.LeftObject != null)
+                                {
+                                    temp.LeftObject.IsMoving = true;
+                                    temp = temp.LeftObject;
+                                }
 
-                            temp = i;
-                            while (temp.RightObject != null)
-                            {
-                                temp.RightObject.IsMoving = true;
-                                temp = temp.RightObject;
-                            }
+                                temp = i;
+                                while (temp.RightObject != null)
+                                {
+                                    temp.RightObject.IsMoving = true;
+                                    temp = temp.RightObject;
+                                }
 
-                            i.IsMoving = true;
+                                i.IsMoving = true;
+                            }
+                            i.IsTouched = false;
                         }
-                        i.IsTouched = false;
                     }
+
+                    if (i.name.equals("rock"))
+                    {
+                        if (CheckCollision(
+                                (int) i.pos.x, (int) i.pos.y, i.texture.getWidth(), i.texture.getHeight(),
+                                m_touchX, m_touchY, 0, 0))
+                        {
+                            --i.rock_health;
+
+                            if(i.rock_health <= 0)
+                            {
+                                i.active = false;
+                            }
+                        }
+
+                    }
+
+
                 }
                 break;
         }

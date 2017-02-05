@@ -145,6 +145,15 @@ public class LevelLoader {
                             temp.name = "sidespike";
                             break;
 
+                        // Tapping Rocks
+                        case 6:
+                            temp = GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().meshList.get("rock"), true);
+                            temp.vel.x = -moveRate;
+                            returnLvl.m_CollisionGrid[height][width] = 0;
+                            temp.KillPlayer = true;
+                            temp.name = "rock";
+                            break;
+
                         // Raise Blocks
                         case 7:
                             temp = GameObjectManager.getInstance().CreateGameObject(pos, GameObjectManager.getInstance().meshList.get("platform"), true);

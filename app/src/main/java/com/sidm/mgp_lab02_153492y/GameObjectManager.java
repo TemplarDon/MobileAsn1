@@ -27,9 +27,10 @@ public class GameObjectManager {
         meshList.put("ground", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.test), ScreenWidth / 16, ScreenHeight / 12, true));
         meshList.put("pallet", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.box), ScreenWidth / 16, ScreenHeight / 12, true));
         meshList.put("rope", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.rope), ScreenWidth / 16, ScreenHeight / 4, true));
-        meshList.put("spike", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.spike), ScreenWidth / 16, ScreenHeight / 12, true));
-        meshList.put("sidespike", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.sidespike), ScreenWidth / 16, ScreenHeight / 12, true));
+        meshList.put("spike", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.spike), ScreenWidth / 16, ScreenHeight / 14, true));
+        meshList.put("sidespike", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.sidespike), ScreenWidth / 16, ScreenHeight / 14, true));
         meshList.put("platform", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.platform), ScreenWidth / 16, ScreenHeight / 12, true));
+        meshList.put("rock", Bitmap.createScaledBitmap(BitmapFactory.decodeResource(c.getResources(), R.drawable.rock2), ScreenWidth / 22, ScreenHeight / 14, true));
     }
 
     public static void CleanUp(boolean DeleteAll)
